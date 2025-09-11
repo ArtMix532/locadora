@@ -33,6 +33,8 @@ public class User {
     @Column(name = "profession", nullable = true, length = 50, unique = false)
     private String profession;
 
+    @Column(name = "access_level", unique = false)
+    private  Integer accessLevel;
 
     public Long getId() {
         return this.id;
@@ -81,5 +83,12 @@ public class User {
     public void setProfession(String profession) {
         this.profession = profession;
     }
-    
+
+    public Integer getAccessLevel() {
+        return this.accessLevel;
+    }
+
+    public void setAccessLevel(Integer accessLevel) {
+        this.accessLevel = accessLevel;
+    }   
 }

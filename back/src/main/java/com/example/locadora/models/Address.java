@@ -39,4 +39,60 @@ public class Address {
     @Column(name = "complement", nullable = true, length = 100)
     private String complement;
 
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getRoad() {
+        return this.road;
+    }
+
+    public void setRoad(String road) {
+        this.road = road;
+    }
+
+    public String getNumber() {
+        return this.number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public String getCity() {
+        return this.city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return this.state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getCep() {
+        return this.cep;
+    }
+
+    public void setCep(String cep) {
+        this.cep = cep;
+    }
+
+    public String getComplement() {
+        return this.complement;
+    }
+
+    public void setComplement(String complement) {
+        this.complement = complement;
+    }
 }
