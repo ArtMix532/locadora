@@ -15,8 +15,8 @@ import jakarta.validation.constraints.Size;
 
 
 @Entity
-@Table(name = "cars")
-public class Car {
+@Table(name = "carros")
+public class Carro {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

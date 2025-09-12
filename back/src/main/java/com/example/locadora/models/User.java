@@ -16,9 +16,9 @@ public class User {
     @Column(name = "id", unique = true)
     private Long id;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "nome", nullable = false, length = 100)
     @NotBlank
-    private String name;
+    private String nome;
 
     @Column(name = "email", nullable = false, length = 100, unique = true)
     @NotBlank
@@ -30,11 +30,11 @@ public class User {
     @Column(name = "cpf", nullable = true, length = 11, unique = true)
     private String cpf;
 
-    @Column(name = "profession", nullable = true, length = 50, unique = false)
-    private String profession;
+    @Column(name = "profisao", nullable = true, length = 50, unique = false)
+    private String profisao;
 
     @Column(name = "access_level", unique = false)
-    private  Integer accessLevel;
+    private  Integer nivelAcesso;
 
     public Long getId() {
         return this.id;
@@ -44,12 +44,12 @@ public class User {
         this.id = id;
     }
 
-    public String getName() {
-        return this.name;
+    public String getNome() {
+        return this.nome;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     public String getEmail() {
@@ -76,19 +76,19 @@ public class User {
         this.cpf = cpf;
     }
 
-    public String getProfession() {
-        return this.profession;
+    public String getProfisao() {
+        return this.profisao;
     }
 
-    public void setProfession(String profession) {
-        this.profession = profession;
+    public void setProfisao(String profisao) {
+        this.profisao = profisao;
     }
 
-    public Integer getAccessLevel() {
-        return this.accessLevel;
+    public Integer getNivelAcesso() {
+        return this.nivelAcesso;
     }
 
-    public void setAccessLevel(Integer accessLevel) {
-        this.accessLevel = accessLevel;
+    public void setNivelAcesso(Integer nivelAcesso) {
+        this.nivelAcesso = nivelAcesso;
     }   
 }

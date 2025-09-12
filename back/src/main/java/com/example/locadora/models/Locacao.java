@@ -55,12 +55,12 @@ public class Locacao {
         foreignKey = @ForeignKey(name = "fk_locacao_agente"))
     private User agente;    // <-- troque para sua entidade de usuário
 
-    /** Car alugado */
+    /** Carro alugado */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "carro_id", nullable = false,
         foreignKey = @ForeignKey(name = "fk_locacao_carro"))
-    private Car carro;
+    private Carro carro;
 
     /** Consideração/parecer do agente sobre a locação */
     @Size(max = 1000)
@@ -111,11 +111,11 @@ public class Locacao {
         this.agente = agente;
     }
 
-    public Car getCarro() {
+    public Carro getCarroro() {
         return this.carro;
     }
 
-    public void setCarro(Car carro) {
+    public void setCarroro(Carro carro) {
         this.carro = carro;
     }
 
