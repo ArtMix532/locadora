@@ -22,13 +22,17 @@ public class Carro {
     private Long id;
 
     @NotBlank
+    @Column(name = "matricula", unique = true)
+    private  String matricula;
+
+    @NotBlank
     @Size(max = 120)
-    @Column(nullable = false, length = 120)
+    @Column(name = "modelo", nullable = false, length = 120)
     private String modelo;
 
     @NotBlank
     @Size(max = 60)
-    @Column(nullable = false, length = 60)
+    @Column(name = "marca", nullable = false, length = 60)
     private String marca;
 
     // Aceita padrão antigo (AAA1234) e Mercosul (ABC1D23). Salva sem hífen e em maiúsculo.
@@ -47,7 +51,6 @@ public class Carro {
 
     @Column(nullable = false)
     private boolean disponivel = true;
-
 
     public Long getId() {
         return this.id;
@@ -100,4 +103,13 @@ public class Carro {
     public void setDisponivel(boolean disponivel) {
         this.disponivel = disponivel;
     }
+
+    public String getMatricula() {
+        return this.matricula;
+    }
+
+    public void setMatricula(String matricula) {
+        this.matricula = matricula;
+    }
+
 }

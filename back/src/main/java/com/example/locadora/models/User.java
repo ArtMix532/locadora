@@ -1,19 +1,24 @@
 package com.example.locadora.models;
 
+import com.example.locadora.enums.NivelAcesso;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
 public class User {
     
     @Id
-    @GeneratedValue
-    @Column(name = "id", unique = true)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "nome", nullable = false, length = 100)
@@ -30,11 +35,17 @@ public class User {
     @Column(name = "cpf", nullable = true, length = 11, unique = true)
     private String cpf;
 
-    @Column(name = "profisao", nullable = true, length = 50, unique = false)
-    private String profisao;
+    @Column(name = "profissao", nullable = true, length = 50, unique = false)
+    private String profissao;
 
-    @Column(name = "access_level", unique = false)
-    private  Integer nivelAcesso;
+    @Column(name = "password", length = 60, nullable = false)
+    @NotBlank
+    @Size(min = 8, max = 60)
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nivel_acesso", nullable = false, length = 20)
+    private  NivelAcesso nivelAcesso = NivelAcesso.CLIENTE;
 
     public Long getId() {
         return this.id;
@@ -76,19 +87,27 @@ public class User {
         this.cpf = cpf;
     }
 
-    public String getProfisao() {
-        return this.profisao;
+    public String getProfissao() {
+        return this.profissao;
     }
 
-    public void setProfisao(String profisao) {
-        this.profisao = profisao;
+    public void setProfissao(String profissao) {
+        this.profissao = profissao;
     }
 
-    public Integer getNivelAcesso() {
+    public NivelAcesso getNivelAcesso() {
         return this.nivelAcesso;
     }
 
-    public void setNivelAcesso(Integer nivelAcesso) {
+    public void setNivelAcesso(NivelAcesso nivelAcesso) {
         this.nivelAcesso = nivelAcesso;
     }   
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

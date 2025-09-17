@@ -19,6 +19,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -82,6 +83,10 @@ public class Locacao {
     @Digits(integer = 12, fraction = 2)
     @Column(name = "valor_final", precision = 12, scale = 2)
     private BigDecimal valorFinal;
+
+    @Column(name = "tipo")
+    @NotBlank
+    private String tipo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -165,5 +170,38 @@ public class Locacao {
 
     public void setStatus(StatusLocacao status) {
         this.status = status;
-    }    
+    }   
+    
+    public Carro getCarro() {
+        return this.carro;
+    }
+
+    public void setCarro(Carro carro) {
+        this.carro = carro;
+    }
+
+    public Instant getRetirada() {
+        return this.retirada;
+    }
+
+    public void setRetirada(Instant retirada) {
+        this.retirada = retirada;
+    }
+
+    public Instant getDevolucao() {
+        return this.devolucao;
+    }
+
+    public void setDevolucao(Instant devolucao) {
+        this.devolucao = devolucao;
+    }
+
+    public String getTipo() {
+        return this.tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+    
 }
