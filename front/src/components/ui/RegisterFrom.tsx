@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -9,12 +10,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eye, EyeOff, Car, Mail, Lock } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Car,
+  Mail,
+  Lock,
+  IdCard,
+  User,
+  Briefcase,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
 
-export const LoginForm = () => {
+export const RegisterForm = () => {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [cpf, setCPF] = useState("");
+  const [proficao, setProficao] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
@@ -49,15 +61,33 @@ export const LoginForm = () => {
             AutoLux Rental
           </h2>
         </div>
-        <CardTitle className="text-xl text-foreground">
-          Entre em sua conta
-        </CardTitle>
+        <CardTitle className="text-xl text-foreground">Cadastre-se</CardTitle>
         <CardDescription className="text-muted-foreground">
           Acesse sua conta para gerenciar suas reservas
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-foreground"
+            >
+              Nome
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Davi Guimaraes"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-10 h-11 bg-background border-border focus:ring-primary transition-smooth"
+                required
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label
               htmlFor="email"
@@ -79,6 +109,46 @@ export const LoginForm = () => {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-foreground"
+            >
+              CPF
+            </Label>
+            <div className="relative">
+              <IdCard className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Davi Guimaraes"
+                value={cpf}
+                onChange={(e) => setCPF(e.target.value)}
+                className="pl-10 h-11 bg-background border-border focus:ring-primary transition-smooth"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-foreground"
+            >
+              Profição
+            </Label>
+            <div className="relative">
+              <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="proficao"
+                type="text"
+                placeholder="Davi Guimaraes"
+                value={proficao}
+                onChange={(e) => setProficao(e.target.value)}
+                className="pl-10 h-11 bg-background border-border focus:ring-primary transition-smooth"
+                required
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label
               htmlFor="password"
@@ -113,33 +183,23 @@ export const LoginForm = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              type="button"
-              variant="link"
-              className="p-0 h-auto text-sm text-primary hover:text-primary-hover transition-smooth"
-            >
-              Esqueci minha senha
-            </Button>
-          </div>
-
           <Button
             type="submit"
             className="w-full h-11 bg-blue-gradient hover:bg-blue-gradient-dark text-white font-semibold shadow-soft hover:shadow-strong transition-all duration-300 hover:scale-[1.02]"
           >
-            Entrar
+            Cadastrar
           </Button>
 
           <div className="text-center pt-4 border-t border-border/50">
             <p className="text-sm text-muted-foreground">
-              Não tem uma conta?{" "}
-              <Link to="/register">
+              Já tem uma conta?{" "}
+              <Link to="/login">
                 <Button
                   type="button"
                   variant="link"
                   className="p-0 h-auto text-sm text-primary hover:text-primary-hover transition-smooth font-semibold"
                 >
-                  Cadastre-se
+                  Login
                 </Button>
               </Link>
             </p>

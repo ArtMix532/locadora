@@ -1,7 +1,8 @@
 import { LoginForm } from "@/components/LoginForm";
 import luxuryCarsHero from "@/assets/luxury-cars-hero.jpg";
+import { RegisterForm } from "@/components/ui/RegisterFrom";
 
-const Login = () => {
+const Register = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Image */}
@@ -45,7 +46,7 @@ const Login = () => {
       {/* Right side - Login Form */}
       <div className="flex-1 lg:max-w-lg xl:max-w-xl flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md">
-          <LoginForm />
+          <RegisterForm />
         </div>
       </div>
 
@@ -61,4 +62,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;
