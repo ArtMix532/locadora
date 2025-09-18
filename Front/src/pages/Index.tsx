@@ -44,9 +44,11 @@ const Index = () => {
                 Começar Agora
               </Button>
             </Link>
-            <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
-              Ver Frota
-            </Button>
+            <Link to="/frota">
+              <Button variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth">
+                Ver Frota
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
