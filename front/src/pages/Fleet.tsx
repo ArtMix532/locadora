@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, ArrowLeft, Users, Fuel, Cog } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -17,7 +11,7 @@ const Fleet = () => {
       category: "Econômico",
       price: "R$ 85",
       features: ["5 Lugares", "Manual", "Flex", "Ar Condicionado"],
-      image: "🚗",
+      image: "🚗"
     },
     {
       id: 2,
@@ -25,20 +19,15 @@ const Fleet = () => {
       category: "Compacto",
       price: "R$ 95",
       features: ["5 Lugares", "Manual/Automático", "Flex", "Direção Elétrica"],
-      image: "🚙",
+      image: "🚙"
     },
     {
       id: 3,
       name: "Hyundai HB20",
       category: "Compacto",
       price: "R$ 100",
-      features: [
-        "5 Lugares",
-        "Manual/Automático",
-        "Flex",
-        "Central Multimídia",
-      ],
-      image: "🚗",
+      features: ["5 Lugares", "Manual/Automático", "Flex", "Central Multimídia"],
+      image: "🚗"
     },
     {
       id: 4,
@@ -46,7 +35,7 @@ const Fleet = () => {
       category: "Sedan Premium",
       price: "R$ 180",
       features: ["5 Lugares", "Automático CVT", "Flex", "Toyota Safety Sense"],
-      image: "🚘",
+      image: "🚘"
     },
     {
       id: 5,
@@ -54,7 +43,7 @@ const Fleet = () => {
       category: "SUV Compacto",
       price: "R$ 150",
       features: ["5 Lugares", "Manual/Automático", "TSI", "Teto Solar"],
-      image: "🚙",
+      image: "🚙"
     },
     {
       id: 6,
@@ -62,8 +51,8 @@ const Fleet = () => {
       category: "SUV Premium",
       price: "R$ 170",
       features: ["5 Lugares", "CVT", "Flex", "Bancos de Couro"],
-      image: "🚙",
-    },
+      image: "🚙"
+    }
   ];
 
   const getCategoryColor = (category: string) => {
@@ -119,8 +108,7 @@ const Fleet = () => {
             Nossa Frota Premium
           </h2>
           <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-            Escolha o veículo perfeito para sua viagem. Todos os nossos carros
-            são revisados e higienizados.
+            Escolha o veículo perfeito para sua viagem. Todos os nossos carros são revisados e higienizados.
           </p>
         </div>
       </section>
@@ -129,23 +117,14 @@ const Fleet = () => {
       <section className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {cars.map((car) => (
-            <Card
-              key={car.id}
-              className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-1 border-border"
-            >
+            <Card key={car.id} className="group hover:shadow-strong transition-all duration-300 hover:-translate-y-1 border-border">
               <CardHeader className="text-center">
                 <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
                   {car.image}
                 </div>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl text-foreground">
-                    {car.name}
-                  </CardTitle>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(
-                      car.category
-                    )}`}
-                  >
+                  <CardTitle className="text-xl text-foreground">{car.name}</CardTitle>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(car.category)}`}>
                     {car.category}
                   </span>
                 </div>
@@ -156,13 +135,8 @@ const Fleet = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   {car.features.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-muted-foreground"
-                    >
-                      {index === 0 && (
-                        <Users className="h-4 w-4 text-primary" />
-                      )}
+                    <div key={index} className="flex items-center gap-2 text-muted-foreground">
+                      {index === 0 && <Users className="h-4 w-4 text-primary" />}
                       {index === 1 && <Cog className="h-4 w-4 text-primary" />}
                       {index === 2 && <Fuel className="h-4 w-4 text-primary" />}
                       {index === 3 && <Car className="h-4 w-4 text-primary" />}
@@ -187,14 +161,10 @@ const Fleet = () => {
               Encontrou o carro ideal?
             </h3>
             <p className="text-xl text-muted-foreground">
-              Faça login para reservar seu veículo e aproveitar ofertas
-              exclusivas
+              Faça login para reservar seu veículo e aproveitar ofertas exclusivas
             </p>
             <Link to="/login">
-              <Button
-                size="lg"
-                className="bg-blue-gradient hover:bg-blue-gradient-dark text-white font-semibold shadow-strong hover:scale-105 transition-all duration-300 px-8 py-6 text-lg"
-              >
+              <Button size="lg" className="bg-blue-gradient hover:bg-blue-gradient-dark text-white font-semibold shadow-strong hover:scale-105 transition-all duration-300 px-8 py-6 text-lg">
                 Fazer Login e Reservar
               </Button>
             </Link>
