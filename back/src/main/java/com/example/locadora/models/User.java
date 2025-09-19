@@ -1,6 +1,7 @@
 package com.example.locadora.models;
 
 import com.example.locadora.enums.NivelAcesso;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "users")
@@ -40,7 +40,7 @@ public class User {
 
     @Column(name = "password", length = 60, nullable = false)
     @NotBlank
-    @Size(min = 8, max = 60)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Enumerated(EnumType.STRING)

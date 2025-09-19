@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,13 @@ public class UserService {
     
     @Autowired
     private UserRepository userRepository;
+
+    private PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public User findById(Long id) {
         Optional<User> funcionario = this.userRepository.findById(id);
@@ -29,6 +37,7 @@ public class UserService {
     @Transactional
     public User create(User obj) {
         obj.setId(null);
+        obj.setPassword(passwordEncoder.encode(obj.getPassword()));
         obj = this.userRepository.save(obj);
         return obj;
     }
@@ -42,7 +51,7 @@ public class UserService {
         newObj.setCpf(obj.getCpf());
         newObj.setProfissao(obj.getProfissao()); 
         newObj.setNivelAcesso(obj.getNivelAcesso());
-        newObj.setPassword(obj.getPassword());
+        newObj.setPassword(passwordEncoder.encode(obj.getPassword()));
         return this.userRepository.save(newObj);
     }
 

@@ -3,7 +3,6 @@ package com.example.locadora.controllers;
 import java.net.URI;
 import java.util.List;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +28,8 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    public UserController(UserService userService) { this.userService = userService; }
 
     @GetMapping("/{id}")
     public ResponseEntity<User> findById(@PathVariable Long id){
