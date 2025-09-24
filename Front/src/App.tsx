@@ -11,6 +11,7 @@ import ClientOrders from "./pages/ClientOrders";
 import AgentOrders from "./pages/AgentOrders";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
+import NewOrder from "./pages/NewOrder";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/frota" element={<Fleet />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/novo-pedido" element={<NewOrder />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/meus-pedidos" element={<ClientOrders />} />
           <Route path="/avaliar-pedidos" element={<AgentOrders />} />
