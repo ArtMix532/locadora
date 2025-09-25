@@ -1,13 +1,14 @@
 package com.example.locadora.services;
 
-import com.example.locadora.repositories.UserRepository; // <-- Importe seu repositório de usuário
-import org.springframework.security.core.userdetails.User;
+import com.example.locadora.models.User; // IMPORT ADICIONAL
+import com.example.locadora.repositories.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority; // IMPORT ADICIONAL
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.Collections; // IMPORT ADICIONAL
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -20,11 +21,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Lógica para buscar o usuário no banco de dados pelo e-mail
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado com o e-mail: " + email));
         
-        // Retorna um objeto UserDetails que o Spring Security entende
-        return new User(user.getEmail(), user.getPassword(), new ArrayList<>()); // Por enquanto, sem roles/autoridades
+        // CORREÇÃO: Passar a role/permissão do usuário. 
+        // O "ROLE_" é um prefixo padrão que o Spring Security espera.
+        return new org.springframework.security.core.userdetails.User(
+            user.getEmail(), 
+            user.getPassword(), 
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getNivelAcesso().toString()))
+        );
     }
 }

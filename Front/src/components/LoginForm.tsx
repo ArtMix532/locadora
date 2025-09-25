@@ -47,11 +47,12 @@ export const LoginForm = () => {
       if (response.ok) {
         const data = await response.json();
 
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("authToken", data.accessToken); // Corrigido para data.accessToken
 
+        console.log(data);
         toast({
           title: "Login realizado com sucesso!",
-          description: `Bem-vindo, ${data.user.name || "usuário"}!`, // Exemplo usando o nome do usuário
+          description: `Bem-vindo, ${data.nome || "usuário"}!`, // Corrigido para data.nome
         });
 
         navigate("/dashboard");
