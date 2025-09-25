@@ -56,11 +56,11 @@ export const RegisterForm = () => {
       cpf,
       profissao,
       password,
-      nivelAcesso: "AGENTE", 
+      nivelAcesso: "AGENTE",
     };
 
     try {
-      const response = await fetch("http://localhost:8080/user", {
+      const response = await fetch("http://localhost:8082/user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
