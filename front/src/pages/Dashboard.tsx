@@ -21,6 +21,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 
 // Mock data - In a real app, this would come from an API
 const dashboardData = {
@@ -136,11 +137,26 @@ interface DashboardProps {
   userName?: string;
 }
 
-const Dashboard = ({
-  userType = "cliente",
-  userName = "João Silva",
-}: DashboardProps) => {
-  const data = dashboardData[userType];
+const Dashboard = () => {
+  const [user, setUser] = useState<{
+    nome: string;
+    nivelAcesso: string;
+  } | null>(null);
+
+  // Efeito para ler do localStorage quando o componente carregar
+  useEffect(() => {
+    const userDataString = localStorage.getItem("user");
+    if (userDataString) {
+      setUser(JSON.parse(userDataString));
+    }
+  }, []);
+
+  if (!user) {
+    return <div>Carregando informações do usuário...</div>;
+  }
+
+  const data =
+    dashboardData[user.nivelAcesso === "AGENTE" ? "agente" : "cliente"];
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string }> = {
@@ -155,27 +171,32 @@ const Dashboard = ({
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar userType={userType} userName={userName} />
+      <Navbar userType={user.nivelAcesso} userName={user.nome} />
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Bem-vindo, {userName}!
-            </h1>
+            <h1 className="text-3xl font-bold ...">Bem-vindo, {user.nome}!</h1>
             <p className="text-muted-foreground">
-              {userType === "agente"
+              {user.nivelAcesso === "AGENTE" // Use user.nivelAcesso
                 ? "Gerencie pedidos, contratos e análises financeiras"
                 : "Acompanhe seus pedidos e contratos de aluguel"}
             </p>
           </div>
           <Link
-            to={userType === "agente" ? "/avaliar-pedidos" : "/novo-pedido"}
+            to={
+              user.nivelAcesso === "AGENTE"
+                ? "/avaliar-pedidos"
+                : "/novo-pedido"
+            }
           >
-            <Button className="bg-blue-gradient hover:bg-blue-gradient-dark text-white shadow-soft">
+            {/* O conteúdo do botão também precisa ser atualizado */}
+            <Button className="bg-blue-gradient ...">
               <Plus className="mr-2 h-4 w-4" />
-              {userType === "agente" ? "Avaliar Pedidos" : "Novo Pedido"}
+              {user.nivelAcesso === "AGENTE"
+                ? "Avaliar Pedidos"
+                : "Novo Pedido"}
             </Button>
           </Link>
         </div>
@@ -206,12 +227,12 @@ const Dashboard = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-primary" />
-                {userType === "agente"
+                {user.nivelAcesso === "AGENTE"
                   ? "Pedidos Recentes"
                   : "Meus Pedidos Recentes"}
               </CardTitle>
               <CardDescription>
-                {userType === "agente"
+                {user.nivelAcesso === "AGENTE"
                   ? "Últimos pedidos que precisam de atenção"
                   : "Seus pedidos mais recentes"}
               </CardDescription>
@@ -223,7 +244,7 @@ const Dashboard = ({
                   className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-smooth"
                 >
                   <div className="space-y-1">
-                    {userType === "agente" && (
+                    {user.nivelAcesso === "AGENTE" && (
                       <p className="text-sm font-medium text-foreground">
                         {(order as any).client}
                       </p>
@@ -245,7 +266,9 @@ const Dashboard = ({
               ))}
               <Link
                 to={
-                  userType === "agente" ? "/avaliar-pedidos" : "/meus-pedidos"
+                  user.nivelAcesso === "AGENTE"
+                    ? "/avaliar-pedidos"
+                    : "/meus-pedidos"
                 }
               >
                 <Button variant="outline" className="w-full">
@@ -267,7 +290,7 @@ const Dashboard = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {userType === "agente" ? (
+              {user.nivelAcesso === "AGENTE" ? (
                 <>
                   <Link to="/avaliar-pedidos" className="block">
                     <Button variant="outline" className="w-full justify-start">

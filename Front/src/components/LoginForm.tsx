@@ -48,6 +48,7 @@ export const LoginForm = () => {
         const data = await response.json();
 
         localStorage.setItem("authToken", data.accessToken); // Corrigido para data.accessToken
+        localStorage.setItem("user", JSON.stringify(data));
 
         console.log(data);
         toast({
