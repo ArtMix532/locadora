@@ -44,7 +44,7 @@ public class Trabalho {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false,
-        foreignKey = @ForeignKey(name = "fk_locacao_user"))
+        foreignKey = @ForeignKey(name = "fk_trabalho_user"))
     private User user;
 
     public Long getId() {
@@ -101,5 +101,5 @@ public class Trabalho {
 
     public void setUser(User user) {
         this.user = user;
-    }
+    }    
 }
