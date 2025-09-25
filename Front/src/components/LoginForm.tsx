@@ -11,16 +11,19 @@ import {
 } from "@/components/ui/card";
 import { Eye, EyeOff, Car, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!email || !password) {
       toast({
@@ -28,14 +31,51 @@ export const LoginForm = () => {
         description: "Por favor, preencha todos os campos.",
         variant: "destructive",
       });
+      setIsLoading(false);
       return;
     }
 
-    // Simulate login
-    toast({
-      title: "Login realizado com sucesso!",
-      description: "Bem-vindo à nossa locadora de veículos.",
-    });
+    try {
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        localStorage.setItem("authToken", data.token);
+
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo, ${data.user.name || "usuário"}!`, // Exemplo usando o nome do usuário
+        });
+
+        navigate("/dashboard");
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Erro no login",
+          description:
+            errorData.message || "E-mail ou senha inválidos. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      // Lida com erros de rede (ex: API offline)
+      toast({
+        title: "Erro de conexão",
+        description:
+          "Não foi possível conectar ao servidor. Verifique sua internet.",
+        variant: "destructive",
+      });
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false); // Para o carregamento, tanto em sucesso quanto em erro
+    }
   };
 
   return (
@@ -126,8 +166,9 @@ export const LoginForm = () => {
           <Button
             type="submit"
             className="w-full h-11 bg-blue-gradient hover:bg-blue-gradient-dark text-white font-semibold shadow-soft hover:shadow-strong transition-all duration-300 hover:scale-[1.02]"
+            disabled={isLoading} // Desabilita o botão durante o carregamento
           >
-            Entrar
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
 
           <div className="text-center pt-4 border-t border-border/50">
