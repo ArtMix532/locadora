@@ -116,14 +116,6 @@ public class Locacao {
         this.agente = agente;
     }
 
-    public Carro getCarroro() {
-        return this.carro;
-    }
-
-    public void setCarroro(Carro carro) {
-        this.carro = carro;
-    }
-
     public String getConsideracaoAgente() {
         return this.consideracaoAgente;
     }

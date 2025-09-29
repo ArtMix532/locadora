@@ -2,6 +2,8 @@ package com.example.locadora.models;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,18 +33,18 @@ public class Trabalho {
     private String empresa;
 
     @Column(name = "comeco", unique = false)
-    @NotBlank
+    @NotNull
     private LocalDate comeco;
     
     @Column(name = "termino", unique = false, nullable = true)
     private LocalDate termino;
 
     @Column(name = "salario", unique = false)
-    @NotBlank
+    @NotNull
     private Float salario;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JsonIgnore
     @JoinColumn(name = "user_id", nullable = false,
         foreignKey = @ForeignKey(name = "fk_trabalho_user"))
     private User user;
