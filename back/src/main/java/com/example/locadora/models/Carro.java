@@ -1,11 +1,14 @@
 package com.example.locadora.models;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -48,6 +51,11 @@ public class Carro {
     @Min(1900) @Max(2100)
     @Column(nullable = false)
     private Integer ano;
+
+    /** Valores (use DECIMAL em banco) */
+    @Digits(integer = 12, fraction = 2)
+    @Column(name = "valor", precision = 12, scale = 2)
+    private BigDecimal valor = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private boolean disponivel = true;
@@ -110,6 +118,14 @@ public class Carro {
 
     public void setMatricula(String matricula) {
         this.matricula = matricula;
+    }
+
+    public BigDecimal getValor() {
+        return this.valor;
+    }
+
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
     }
 
 }

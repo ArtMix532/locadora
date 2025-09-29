@@ -49,6 +49,7 @@ public class CarroService {
         existente.setPlaca(dados.getPlaca());
         existente.setAno(dados.getAno());
         existente.setDisponivel(dados.getDisponivel());
+        existente.setValor(dados.getValor());
         return carroRepository.save(existente);
     }
 
