@@ -24,7 +24,7 @@ public class JwtService {
 
   public JwtService(
       @Value("${security.jwt.secret}") String secret,
-      @Value("${security.jwt.expiration:7200}") long expirationSeconds
+      @Value("${security.jwt.expiration:124000}") long expirationSeconds
   ) {
     if (secret == null || secret.length() < 32) {
       throw new IllegalStateException("security.jwt.secret ausente ou curto (<32 chars).");
