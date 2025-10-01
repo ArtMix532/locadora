@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.example.locadora.dtos.EnderecoDto;
 import com.example.locadora.models.Endereco;
 import com.example.locadora.services.EnderecoService;
 
@@ -33,8 +34,10 @@ public class EnderecoController {
 
     /** Busca o endereço do usuário (404 se não existir) */
     @GetMapping("/users/{userId}/endereco")
-    public Endereco getByUser(@PathVariable Long userId) {
-        return service.getByUserOr404(userId);
+    public ResponseEntity<EnderecoDto> getByUser(@PathVariable Long userId) {
+        return service.findByUser(userId) // retorna Optional<Endereco>
+            .map(e -> ResponseEntity.ok(new EnderecoDto(e)))
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /** Cria endereço para o usuário que ainda não tem (422 se já existir) */

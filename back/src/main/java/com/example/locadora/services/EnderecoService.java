@@ -1,6 +1,8 @@
 // src/main/java/com/example/locadora/services/EnderecoService.java
 package com.example.locadora.services;
 
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,5 +108,9 @@ public class EnderecoService {
     public void deleteById(Long enderecoId) {
         var e = getByIdOr404(enderecoId);
         enderecoRepository.delete(e);
+    }
+
+    public Optional<Endereco> findByUser(Long userId) {
+        return enderecoRepository.findByUserId(userId); // Optional.empty() se não existir
     }
 }
