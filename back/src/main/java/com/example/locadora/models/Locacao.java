@@ -1,7 +1,7 @@
 package com.example.locadora.models;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.example.locadora.enums.StatusLocacao;
 
@@ -68,11 +68,11 @@ public class Locacao {
     private String consideracaoAgente;
 
     /** Datas em UTC (recomendado usar DATETIME(3) no MySQL) */
-    @Column(name = "retirada", columnDefinition = "datetime(3)")
-    private Instant retirada;
+    @Column(name = "retirada")
+    private LocalDateTime retirada;
 
-    @Column(name = "devolucao", columnDefinition = "datetime(3)")
-    private Instant devolucao;
+    @Column(name = "devolucao")
+    private LocalDateTime devolucao;
 
     /** Valores (use DECIMAL em banco) */
     @Digits(integer = 12, fraction = 2)
@@ -123,19 +123,19 @@ public class Locacao {
         this.consideracaoAgente = consideracaoAgente;
     }
 
-    public Instant getRetiradaEm() {
+    public LocalDateTime getRetiradaEm() {
         return this.retirada;
     }
 
-    public void setRetiradaEm(Instant retirada) {
+    public void setRetiradaEm(LocalDateTime retirada) {
         this.retirada = retirada;
     }
 
-    public Instant getDevolucaoEm() {
+    public LocalDateTime getDevolucaoEm() {
         return this.devolucao;
     }
 
-    public void setDevolucaoEm(Instant devolucao) {
+    public void setDevolucaoEm(LocalDateTime devolucao) {
         this.devolucao = devolucao;
     }
 
@@ -171,19 +171,19 @@ public class Locacao {
         this.carro = carro;
     }
 
-    public Instant getRetirada() {
+    public LocalDateTime getRetirada() {
         return this.retirada;
     }
 
-    public void setRetirada(Instant retirada) {
+    public void setRetirada(LocalDateTime retirada) {
         this.retirada = retirada;
     }
 
-    public Instant getDevolucao() {
+    public LocalDateTime getDevolucao() {
         return this.devolucao;
     }
 
-    public void setDevolucao(Instant devolucao) {
+    public void setDevolucao(LocalDateTime devolucao) {
         this.devolucao = devolucao;
     }
 

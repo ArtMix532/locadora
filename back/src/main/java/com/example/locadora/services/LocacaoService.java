@@ -1,6 +1,6 @@
 package com.example.locadora.services;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -70,15 +70,15 @@ public class LocacaoService {
     }
 
     @Transactional(readOnly = true)
-public List<LocacaoResponse> listByCliente(Long clienteId) {
-    // 1. Busca as entidades do banco de dados
-    List<Locacao> locacoes = locacaoRepository.findByClienteId(clienteId);
+    public List<LocacaoResponse> listByCliente(Long clienteId) {
+        // 1. Busca as entidades do banco de dados
+        List<Locacao> locacoes = locacaoRepository.findByClienteId(clienteId);
 
-    // 2. Converte cada entidade `Locacao` para `LocacaoResponse` usando seu método `toResponse`
-    return locacoes.stream()
-                   .map(this::toResponse) // Usando seu método helper `toResponse`!
-                   .toList(); // ou .collect(Collectors.toList());
-}
+        // 2. Converte cada entidade `Locacao` para `LocacaoResponse` usando seu método `toResponse`
+        return locacoes.stream()
+                    .map(this::toResponse) // Usando seu método helper `toResponse`!
+                    .toList(); // ou .collect(Collectors.toList());
+    }
 
     @Transactional(readOnly = true)
     public List<Locacao> listByAgente(Long agenteId) {
@@ -145,7 +145,7 @@ public List<LocacaoResponse> listByCliente(Long clienteId) {
 
     /** Checa se existe conflito de agendamento para um carro no intervalo [inicio, fim] */
     @Transactional(readOnly = true)
-    public boolean existeConflitoParaCarro(Long carroId, Instant inicio, Instant fim) {
+    public boolean existeConflitoParaCarro(Long carroId, LocalDateTime inicio, LocalDateTime fim) {
         List<Locacao> emConflito = locacaoRepository.findByRetiradaBeforeAndDevolucaoAfter(fim, inicio);
         // Filtra só do carro informado (se quiser otimizar, crie query específica no repository)
         return emConflito.stream().anyMatch(l -> l.getCarro().getId().equals(carroId));

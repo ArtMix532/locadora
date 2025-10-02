@@ -1,6 +1,6 @@
 package com.example.locadora.repositories;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,11 +44,11 @@ public interface LocacaoRepository extends JpaRepository<Locacao, Long> {
     List<Locacao> findByStatus(StatusLocacao status);
 
     // Buscar locações ativas em um período
-    List<Locacao> findByRetiradaBeforeAndDevolucaoAfter(Instant retirada, Instant devolucao);
+    List<Locacao> findByRetiradaBeforeAndDevolucaoAfter(LocalDateTime retirada, LocalDateTime devolucao);
 
     // Buscar todas as locações previstas para retirada depois de uma data
-    List<Locacao> findByRetiradaAfter(Instant retirada);
+    List<Locacao> findByRetiradaAfter(LocalDateTime retirada);
 
     // Buscar todas as locações com devolução antes de uma data
-    List<Locacao> findByDevolucaoBefore(Instant devolucao);
+    List<Locacao> findByDevolucaoBefore(LocalDateTime devolucao);
 }

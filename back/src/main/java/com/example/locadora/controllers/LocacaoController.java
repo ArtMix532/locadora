@@ -1,7 +1,7 @@
 package com.example.locadora.controllers;
 
 import java.net.URI;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -100,8 +100,8 @@ public class LocacaoController {
     // Disponibilidade de carro
     @GetMapping("/carros/{carroId}/disponibilidade")
     public ResponseEntity<Boolean> disponibilidade(@PathVariable Long carroId,
-                                                   @RequestParam("inicio") Instant inicio,
-                                                   @RequestParam("fim") Instant fim) {
+                                                   @RequestParam("inicio") LocalDateTime inicio,
+                                                   @RequestParam("fim") LocalDateTime fim) {
         boolean conflito = service.existeConflitoParaCarro(carroId, inicio, fim);
         return ResponseEntity.ok(!conflito);
     }

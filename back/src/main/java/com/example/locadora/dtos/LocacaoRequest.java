@@ -1,7 +1,7 @@
 package com.example.locadora.dtos;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.example.locadora.enums.StatusLocacao;
 
@@ -22,8 +22,8 @@ public class LocacaoRequest {
 
     private String consideracaoAgente;
 
-    private Instant retirada;  // opcional no create, dependendo da regra
-    private Instant devolucao; // opcional
+    private LocalDateTime retirada;  // opcional no create, dependendo da regra
+    private LocalDateTime devolucao; // opcional
 
     @Digits(integer = 12, fraction = 2)
     private BigDecimal valorPrevisto;
@@ -50,11 +50,11 @@ public class LocacaoRequest {
     public String getConsideracaoAgente() { return consideracaoAgente; }
     public void setConsideracaoAgente(String consideracaoAgente) { this.consideracaoAgente = consideracaoAgente; }
 
-    public Instant getRetirada() { return retirada; }
-    public void setRetirada(Instant retirada) { this.retirada = retirada; }
+    public LocalDateTime getRetirada() { return retirada; }
+    public void setRetirada(LocalDateTime retirada) { this.retirada = retirada; }
 
-    public Instant getDevolucao() { return devolucao; }
-    public void setDevolucao(Instant devolucao) { this.devolucao = devolucao; }
+    public LocalDateTime getDevolucao() { return devolucao; }
+    public void setDevolucao(LocalDateTime devolucao) { this.devolucao = devolucao; }
 
     public BigDecimal getValorPrevisto() { return valorPrevisto; }
     public void setValorPrevisto(BigDecimal valorPrevisto) { this.valorPrevisto = valorPrevisto; }

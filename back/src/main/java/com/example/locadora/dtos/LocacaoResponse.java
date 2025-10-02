@@ -3,7 +3,7 @@ package com.example.locadora.dtos;
 // LocacaoResponse.java
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.example.locadora.enums.StatusLocacao;
 import com.example.locadora.models.Locacao;
@@ -14,8 +14,8 @@ public class LocacaoResponse {
   public Long agenteId;
   public Long carroId;
   public String consideracaoAgente;
-  public Instant retirada;
-  public Instant devolucao;
+  public LocalDateTime retirada;
+  public LocalDateTime devolucao;
   public BigDecimal valorPrevisto;
   public BigDecimal valorFinal;
   public String tipo;
@@ -86,19 +86,19 @@ public class LocacaoResponse {
     this.consideracaoAgente = consideracaoAgente;
   }
 
-  public Instant getRetirada() {
+  public LocalDateTime getRetirada() {
     return this.retirada;
   }
 
-  public void setRetirada(Instant retirada) {
+  public void setRetirada(LocalDateTime retirada) {
     this.retirada = retirada;
   }
 
-  public Instant getDevolucao() {
+  public LocalDateTime getDevolucao() {
     return this.devolucao;
   }
 
-  public void setDevolucao(Instant devolucao) {
+  public void setDevolucao(LocalDateTime devolucao) {
     this.devolucao = devolucao;
   }
 
