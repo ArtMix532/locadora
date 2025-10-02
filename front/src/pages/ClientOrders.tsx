@@ -37,8 +37,6 @@ import {
   ServerCrash,
 } from "lucide-react";
 
-// src/services/api.ts
-
 // --- INTERFACES PARA OS DADOS VINDOS DA API ---
 interface UserData {
   id: number;
@@ -61,6 +59,16 @@ interface LocacaoResponse {
   carroModelo: string;
 }
 
+// Hook de toast simulado para evitar erros
+const useToast = () => ({
+  toast: (options: { title: string; description: string; variant?: string }) =>
+    console.log(
+      `[Toast - ${options.variant || "default"}] ${options.title}: ${
+        options.description
+      }`
+    ),
+});
+
 const ClientOrders = () => {
   // --- ESTADOS PARA DADOS REAIS, LOADING E ERRO ---
   const [locacoes, setLocacoes] = useState<LocacaoResponse[]>([]);
@@ -68,9 +76,13 @@ const ClientOrders = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<UserData | null>(null);
 
-  // Estados para os filtros continuam os mesmos
+  // Estados para os filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+
+  // Estado para o botão de cancelar
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const { toast } = useToast();
 
   // --- BUSCA OS DADOS DA API QUANDO O COMPONENTE CARREGA ---
   useEffect(() => {
@@ -95,7 +107,6 @@ const ClientOrders = () => {
 
         const data = await response.json();
         setLocacoes(data);
-        console.log(data);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -106,14 +117,13 @@ const ClientOrders = () => {
   }, []); // Array vazio para buscar dados apenas uma vez
 
   const getStatusBadge = (status: LocacaoResponse["status"]) => {
-    // Mapeia o status do backend (ex: "RESERVADA") para o status do layout (ex: "pendente")
     const statusMap = {
-      RESERVADA: "pendente",
+      RESERVADA: "analise", // Mapeando RESERVADA para "Em Análise"
       ATIVA: "aprovado",
       CONCLUIDA: "concluido",
       CANCELADA: "cancelado",
     };
-    const mappedStatus = statusMap[status] || "analise";
+    const mappedStatus = statusMap[status] || "pendente";
 
     const variants: Record<
       string,
@@ -149,7 +159,7 @@ const ClientOrders = () => {
     );
   };
 
-  // --- FILTRO APLICADO AOS DADOS REAIS DO BANCO DE DADOS ---
+  // --- FILTRO APLICADO NO FRONTEND ---
   const filteredOrders = locacoes.filter((loc) => {
     const vehicleName = `${loc.carroMarca} ${loc.carroModelo}`.toLowerCase();
     const matchesSearch =
@@ -158,14 +168,13 @@ const ClientOrders = () => {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-    // Mapeia o status do backend para o status do filtro
     const statusMap = {
-      RESERVADA: "pendente",
+      RESERVADA: "analise",
       ATIVA: "aprovado",
       CONCLUIDA: "concluido",
       CANCELADA: "cancelado",
     };
-    const mappedStatus = statusMap[loc.status] || "analise";
+    const mappedStatus = statusMap[loc.status] || "pendente";
 
     const matchesStatus =
       statusFilter === "todos" || mappedStatus === statusFilter;
@@ -173,10 +182,53 @@ const ClientOrders = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // --- FUNÇÃO DE CANCELAR ---
+  const handleCancelOrder = async (locacao: LocacaoResponse) => {
+    if (
+      !window.confirm(
+        `Tem certeza que deseja cancelar o pedido PED-${locacao.id
+          .toString()
+          .padStart(3, "0")}?`
+      )
+    ) {
+      return;
+    }
+    if (!user) return;
+
+    setCancelingId(locacao.id);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/locacoes/${locacao.id}/status?status=CANCELADA`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Falha ao cancelar o pedido.");
+      }
+
+      setLocacoes((prevLocacoes) =>
+        prevLocacoes.map((loc) =>
+          loc.id === locacao.id ? { ...loc, status: "CANCELADA" } : loc
+        )
+      );
+      toast({ title: "Sucesso!", description: "O pedido foi cancelado." });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelingId(null);
+    }
+  };
+
   const canEditOrCancel = (status: LocacaoResponse["status"]) =>
     status === "RESERVADA";
 
-  // --- JSX PARA LOADING E ERRO ---
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -203,7 +255,6 @@ const ClientOrders = () => {
     return <div>Redirecionando para o login...</div>;
   }
 
-  // --- RENDERIZAÇÃO DO LAYOUT ORIGINAL COM OS DADOS REAIS ---
   return (
     <div className="min-h-screen bg-background">
       <Navbar userType={user.nivelAcesso} userName={user.nome} />
@@ -285,54 +336,71 @@ const ClientOrders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((loc) => (
-                    <TableRow key={loc.id}>
-                      <TableCell className="font-medium">
-                        PED-{loc.id.toString().padStart(3, "0")}
-                      </TableCell>
-                      <TableCell>{`${loc.carroPlaca} ${loc.carroModelo}`}</TableCell>
-                      <TableCell>{getStatusBadge(loc.status)}</TableCell>
-                      <TableCell className="text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(loc.retirada).toLocaleDateString(
-                            "pt-BR"
-                          )} -{" "}
-                          {new Date(loc.devolucao).toLocaleDateString("pt-BR")}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        {loc.valorPrevisto.toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {loc.agenteId === 1 ? "Davi" : loc.agenteNome}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {canEditOrCancel(loc.status) && (
-                            <>
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                  {filteredOrders.length > 0 ? (
+                    filteredOrders.map((loc) => (
+                      <TableRow key={loc.id}>
+                        <TableCell className="font-medium">
+                          PED-{loc.id.toString().padStart(3, "0")}
+                        </TableCell>
+                        <TableCell>{`${loc.carroMarca} ${loc.carroModelo}`}</TableCell>
+                        <TableCell>{getStatusBadge(loc.status)}</TableCell>
+                        <TableCell className="text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(loc.retirada).toLocaleDateString(
+                              "pt-BR"
+                            )}{" "}
+                            -{" "}
+                            {new Date(loc.devolucao).toLocaleDateString(
+                              "pt-BR"
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold text-green-600">
+                          {loc.valorPrevisto.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          {loc.agenteId === 1 ? "Davi" : loc.agenteNome}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {canEditOrCancel(loc.status) && (
+                              <>
+                                <Button variant="ghost" size="sm">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={() => handleCancelOrder(loc)}
+                                  disabled={cancelingId === loc.id}
+                                >
+                                  {cancelingId === loc.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <X className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        Nenhum pedido encontrado.
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
