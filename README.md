@@ -74,11 +74,23 @@ O projeto pode ser acessado online através do seguinte link:
 ## 👥 Desenvolvedor
 
 - Davi Benjamim Guimarães
+- Albert Luis Pereira de Jesus
+- Jonas Rafael Martins
 
 ## 📬 Contato
 
 Caso queira entrar em contato:
 
 - ✉️ Email: `davibenjamimguimaraes@gmail.com`
-- 🔗 LinkedIn: [Davi Benjamim Guimarães](https://www.linkedin.com/in/SEU-LINKEDIN-AQUI/)
+- 🔗 LinkedIn: [Davi Benjamim Guimarães](https://www.linkedin.com/in/davi-benjamim-guimar%C3%A3es-b82741288/)
 - 🐙 GitHub: [ArtMix532](https://github.com/ArtMix532)
+
+
+- ✉️ Email: `albertluis123y88@gmail.com`
+- 🔗 LinkedIn: [Albert Luis Pereira de Jesus](https://www.linkedin.com/in/albert-luis/)
+- 🐙 GitHub: [SrGuzz](https://github.com/SrGuzz)
+
+
+- ✉️ Email: `jonasrmartins17@gmail.com`
+- 🔗 LinkedIn: [Jonas Rafael Martins](https://www.linkedin.com/in/SEU-LINKEDIN-AQUI/)
+- 🐙 GitHub: [Kjonps](https://github.com/Kjonps)
