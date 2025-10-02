@@ -342,7 +342,7 @@ const Dashboard = () => {
             <CardContent className="space-y-3">
               {user.nivelAcesso === "AGENTE" ? (
                 <>
-                  <Link to="/avaliar-pedidos" className="block">
+                  <Link to="/ManageAllOrders" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <AlertCircle className="mr-2 h-4 w-4" />
                       Avaliar Pedidos Pendentes
