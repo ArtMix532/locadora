@@ -29,12 +29,12 @@ import {
   Search,
   Filter,
   Eye,
-  Edit,
-  X,
   Calendar,
-  Car,
   Loader2,
   ServerCrash,
+  Users,
+  CheckCircle, // Ícone adicionado
+  XCircle, // Ícone adicionado
 } from "lucide-react";
 
 // --- INTERFACES PARA OS DADOS VINDOS DA API ---
@@ -69,24 +69,18 @@ const useToast = () => ({
     ),
 });
 
-const ClientOrders = () => {
-  // --- ESTADOS PARA DADOS REAIS, LOADING E ERRO ---
+const ManageAllOrders = () => {
   const [locacoes, setLocacoes] = useState<LocacaoResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<UserData | null>(null);
-
-  // Estados para os filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-
-  // Estado para o botão de cancelar
-  const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const [processingId, setProcessingId] = useState<number | null>(null); // Renomeado de cancelingId
   const { toast } = useToast();
 
-  // --- BUSCA OS DADOS DA API QUANDO O COMPONENTE CARREGA ---
   useEffect(() => {
-    const fetchClientData = async () => {
+    const fetchAllOrdersData = async () => {
       const userDataString = localStorage.getItem("user");
       if (!userDataString) {
         setError("Usuário não autenticado. Por favor, faça o login.");
@@ -98,12 +92,11 @@ const ClientOrders = () => {
       setUser(parsedUser);
 
       try {
-        const response = await fetch(
-          `http://localhost:8080/api/clientes/${parsedUser.id}/locacoes`,
-          { headers: { Authorization: `Bearer ${parsedUser.accessToken}` } }
-        );
+        const response = await fetch(`http://localhost:8080/api/locacoes`, {
+          headers: { Authorization: `Bearer ${parsedUser.accessToken}` },
+        });
         if (!response.ok)
-          throw new Error("Não foi possível carregar seus pedidos.");
+          throw new Error("Não foi possível carregar as locações.");
 
         const data = await response.json();
         setLocacoes(data);
@@ -113,18 +106,17 @@ const ClientOrders = () => {
         setIsLoading(false);
       }
     };
-    fetchClientData();
-  }, []); // Array vazio para buscar dados apenas uma vez
+    fetchAllOrdersData();
+  }, []);
 
   const getStatusBadge = (status: LocacaoResponse["status"]) => {
     const statusMap = {
-      RESERVADA: "analise", // Mapeando RESERVADA para "Em Análise"
+      RESERVADA: "analise",
       ATIVA: "aprovado",
       CONCLUIDA: "concluido",
       CANCELADA: "cancelado",
     };
     const mappedStatus = statusMap[status] || "pendente";
-
     const variants: Record<
       string,
       { variant: any; label: string; className?: string }
@@ -159,15 +151,14 @@ const ClientOrders = () => {
     );
   };
 
-  // --- FILTRO APLICADO NO FRONTEND ---
   const filteredOrders = locacoes.filter((loc) => {
     const vehicleName = `${loc.carroMarca} ${loc.carroModelo}`.toLowerCase();
+    const clientName = loc.clienteNome.toLowerCase();
+    const orderCode = `ped-${loc.id.toString().padStart(3, "0")}`.toLowerCase();
     const matchesSearch =
       vehicleName.includes(searchTerm.toLowerCase()) ||
-      `PED-${loc.id.toString().padStart(3, "0")}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
+      clientName.includes(searchTerm.toLowerCase()) ||
+      orderCode.includes(searchTerm.toLowerCase());
     const statusMap = {
       RESERVADA: "analise",
       ATIVA: "aprovado",
@@ -175,46 +166,28 @@ const ClientOrders = () => {
       CANCELADA: "cancelado",
     };
     const mappedStatus = statusMap[loc.status] || "pendente";
-
     const matchesStatus =
       statusFilter === "todos" || mappedStatus === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
-  // --- FUNÇÃO DE CANCELAR ---
-  const handleCancelOrder = async (locacao: LocacaoResponse) => {
-    if (
-      !window.confirm(
-        `Tem certeza que deseja cancelar o pedido PED-${locacao.id
-          .toString()
-          .padStart(3, "0")}?`
-      )
-    ) {
-      return;
-    }
+  // --- NOVAS FUNÇÕES ---
+  const handleApprove = async (locacaoId: number) => {
     if (!user) return;
-
-    setCancelingId(locacao.id);
+    setProcessingId(locacaoId);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/locacoes/${locacao.id}/status?status=CANCELADA`,
+        `http://localhost:8080/api/locacoes/${locacaoId}/status?status=ATIVA`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${user.accessToken}` },
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Falha ao cancelar o pedido.");
-      }
-
-      setLocacoes((prevLocacoes) =>
-        prevLocacoes.map((loc) =>
-          loc.id === locacao.id ? { ...loc, status: "CANCELADA" } : loc
-        )
+      if (!response.ok) throw new Error("Falha ao aprovar o pedido.");
+      setLocacoes((prev) =>
+        prev.map((l) => (l.id === locacaoId ? { ...l, status: "ATIVA" } : l))
       );
-      toast({ title: "Sucesso!", description: "O pedido foi cancelado." });
+      toast({ title: "Sucesso!", description: "O pedido foi aprovado." });
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -222,18 +195,54 @@ const ClientOrders = () => {
         variant: "destructive",
       });
     } finally {
-      setCancelingId(null);
+      setProcessingId(null);
     }
   };
 
-  const canEditOrCancel = (status: LocacaoResponse["status"]) =>
+  const handleReject = async (locacaoId: number) => {
+    if (
+      !window.confirm(
+        `Tem certeza que deseja rejeitar o pedido PED-${locacaoId
+          .toString()
+          .padStart(3, "0")}?`
+      )
+    )
+      return;
+    if (!user) return;
+    setProcessingId(locacaoId);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/locacoes/${locacaoId}/status?status=CANCELADA`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${user.accessToken}` },
+        }
+      );
+      if (!response.ok) throw new Error("Falha ao rejeitar o pedido.");
+      setLocacoes((prev) =>
+        prev.map((l) =>
+          l.id === locacaoId ? { ...l, status: "CANCELADA" } : l
+        )
+      );
+      toast({ title: "Sucesso!", description: "O pedido foi rejeitado." });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const canApproveOrReject = (status: LocacaoResponse["status"]) =>
     status === "RESERVADA";
 
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Buscando seus
-        pedidos...
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Carregando locações...
       </div>
     );
   }
@@ -242,7 +251,7 @@ const ClientOrders = () => {
       <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
         <ServerCrash className="h-16 w-16 text-destructive mb-4" />
         <h2 className="text-2xl font-bold text-destructive mb-2">
-          Erro ao carregar dados
+          Erro ao Carregar Dados
         </h2>
         <p className="text-muted-foreground">{error}</p>
         <Button onClick={() => window.location.reload()} className="mt-6">
@@ -252,7 +261,11 @@ const ClientOrders = () => {
     );
   }
   if (!user) {
-    return <div>Redirecionando para o login...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Sessão inválida. Redirecionando...
+      </div>
+    );
   }
 
   return (
@@ -261,13 +274,12 @@ const ClientOrders = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Meus Pedidos
+            Gerenciar Locações
           </h1>
           <p className="text-muted-foreground">
-            Acompanhe o status dos seus pedidos de aluguel de veículos
+            Visualize e gerencie todos os pedidos de aluguel
           </p>
         </div>
-
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -280,7 +292,7 @@ const ClientOrders = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por veículo ou código do pedido..."
+                  placeholder="Buscar por cliente, veículo ou código do pedido..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -292,7 +304,6 @@ const ClientOrders = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos os Status</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
                   <SelectItem value="analise">Em Análise</SelectItem>
                   <SelectItem value="aprovado">Aprovado</SelectItem>
                   <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -302,23 +313,17 @@ const ClientOrders = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Lista de Pedidos</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" /> Todas as Locações
+                </CardTitle>
                 <CardDescription>
-                  {filteredOrders.length} pedido(s) encontrado(s)
+                  {filteredOrders.length} locação(ões) encontrada(s)
                 </CardDescription>
               </div>
-              <Button
-                onClick={() => (window.location.href = "/novo-pedido")}
-                className="bg-blue-gradient hover:bg-blue-gradient-dark text-white"
-              >
-                <Car className="mr-2 h-4 w-4" />
-                Novo Pedido
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -327,10 +332,11 @@ const ClientOrders = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Código</TableHead>
+                    <TableHead>Cliente</TableHead>
                     <TableHead>Veículo</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Período</TableHead>
-                    <TableHead>Valor Total</TableHead>
+                    <TableHead>Valor</TableHead>
                     <TableHead>Agente</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -342,6 +348,7 @@ const ClientOrders = () => {
                         <TableCell className="font-medium">
                           PED-{loc.id.toString().padStart(3, "0")}
                         </TableCell>
+                        <TableCell>{loc.clienteNome}</TableCell>
                         <TableCell>{`${loc.carroMarca} ${loc.carroModelo}`}</TableCell>
                         <TableCell>{getStatusBadge(loc.status)}</TableCell>
                         <TableCell className="text-sm">
@@ -367,25 +374,39 @@ const ClientOrders = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="p-2 h-auto"
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {canEditOrCancel(loc.status) && (
+                            {/* --- BOTÕES ATUALIZADOS --- */}
+                            {canApproveOrReject(loc.status) && (
                               <>
-                                <Button variant="ghost" size="sm">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
                                 <Button
-                                  variant="ghost"
                                   size="sm"
-                                  className="text-destructive hover:text-destructive"
-                                  onClick={() => handleCancelOrder(loc)}
-                                  disabled={cancelingId === loc.id}
+                                  className="bg-green-600 hover:bg-green-700 p-2 h-auto"
+                                  onClick={() => handleApprove(loc.id)}
+                                  disabled={processingId === loc.id}
                                 >
-                                  {cancelingId === loc.id ? (
+                                  {processingId === loc.id ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
-                                    <X className="h-4 w-4" />
+                                    <CheckCircle className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="p-2 h-auto"
+                                  onClick={() => handleReject(loc.id)}
+                                  disabled={processingId === loc.id}
+                                >
+                                  {processingId === loc.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4" />
                                   )}
                                 </Button>
                               </>
@@ -396,8 +417,8 @@ const ClientOrders = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        Nenhum pedido encontrado.
+                      <TableCell colSpan={8} className="h-24 text-center">
+                        Nenhuma locação encontrada.
                       </TableCell>
                     </TableRow>
                   )}
@@ -411,4 +432,4 @@ const ClientOrders = () => {
   );
 };
 
-export default ClientOrders;
+export default ManageAllOrders;

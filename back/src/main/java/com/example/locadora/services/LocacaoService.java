@@ -70,9 +70,15 @@ public class LocacaoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Locacao> listByCliente(Long clienteId) {
-        return locacaoRepository.findByClienteId(clienteId);
-    }
+public List<LocacaoResponse> listByCliente(Long clienteId) {
+    // 1. Busca as entidades do banco de dados
+    List<Locacao> locacoes = locacaoRepository.findByClienteId(clienteId);
+
+    // 2. Converte cada entidade `Locacao` para `LocacaoResponse` usando seu método `toResponse`
+    return locacoes.stream()
+                   .map(this::toResponse) // Usando seu método helper `toResponse`!
+                   .toList(); // ou .collect(Collectors.toList());
+}
 
     @Transactional(readOnly = true)
     public List<Locacao> listByAgente(Long agenteId) {

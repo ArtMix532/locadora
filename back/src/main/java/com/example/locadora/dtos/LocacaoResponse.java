@@ -23,6 +23,7 @@ public class LocacaoResponse {
   public String clienteNome; 
   public String agenteNome; 
   public String carroPlaca;
+  public String carroModelo;
 
   public static LocacaoResponse of(Locacao l) {
     LocacaoResponse r = new LocacaoResponse();
@@ -40,6 +41,7 @@ public class LocacaoResponse {
     r.clienteNome = l.getCliente().getNome();
     r.agenteNome = l.getAgente().getNome();
     r.carroPlaca = l.getCarro().getPlaca();
+    r.carroModelo = l.getCarro().getModelo();
     return r;
   }
 
@@ -123,6 +125,14 @@ public class LocacaoResponse {
   public void setTipo(String tipo) {
     this.tipo = tipo;
   }
+
+  public String getCarroModelo() {
+    return this.carroModelo;
+}
+
+public void setCarroModelo(String carroModelo) {
+    this.carroModelo = carroModelo;
+}
 
   public StatusLocacao getStatus() {
     return this.status;

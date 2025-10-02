@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -11,175 +13,228 @@ import Navbar from "@/components/Navbar";
 import {
   Car,
   FileText,
-  Users,
-  TrendingUp,
   Clock,
-  CheckCircle,
-  AlertCircle,
-  DollarSign,
   Calendar,
   Plus,
+  TrendingUp,
+  Loader2,
+  ServerCrash,
+  AlertCircle,
+  CheckCircle,
+  DollarSign,
+  Users,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import React, { useState, useEffect } from "react";
 
-// Mock data - In a real app, this would come from an API
-const dashboardData = {
-  cliente: {
-    stats: [
-      {
-        title: "Pedidos Ativos",
-        value: "3",
-        icon: FileText,
-        color: "text-blue-ocean",
-      },
-      {
-        title: "Contratos Vigentes",
-        value: "1",
-        icon: Car,
-        color: "text-green-600",
-      },
-      {
-        title: "Histórico Total",
-        value: "12",
-        icon: Clock,
-        color: "text-muted-foreground",
-      },
-      {
-        title: "Próximo Vencimento",
-        value: "15 dias",
-        icon: Calendar,
-        color: "text-orange-500",
-      },
-    ],
-    recentOrders: [
-      {
-        id: 1,
-        vehicle: "Toyota Corolla",
-        status: "aprovado",
-        date: "2024-01-15",
-        amount: "R$ 2.800/mês",
-      },
-      {
-        id: 2,
-        vehicle: "Honda HR-V",
-        status: "analise",
-        date: "2024-01-10",
-        amount: "R$ 3.200/mês",
-      },
-      {
-        id: 3,
-        vehicle: "VW T-Cross",
-        status: "pendente",
-        date: "2024-01-08",
-        amount: "R$ 2.950/mês",
-      },
-    ],
-  },
-  agente: {
-    stats: [
-      {
-        title: "Pedidos Pendentes",
-        value: "24",
-        icon: AlertCircle,
-        color: "text-orange-500",
-      },
-      {
-        title: "Aprovados Hoje",
-        value: "8",
-        icon: CheckCircle,
-        color: "text-green-600",
-      },
-      {
-        title: "Receita Mensal",
-        value: "R$ 485K",
-        icon: DollarSign,
-        color: "text-blue-ocean",
-      },
-      {
-        title: "Clientes Ativos",
-        value: "156",
-        icon: Users,
-        color: "text-purple-600",
-      },
-    ],
-    recentOrders: [
-      {
-        id: 1,
-        client: "João Silva",
-        vehicle: "Toyota Corolla",
-        status: "analise",
-        date: "2024-01-15",
-        amount: "R$ 2.800/mês",
-      },
-      {
-        id: 2,
-        client: "Maria Santos",
-        vehicle: "Honda HR-V",
-        status: "pendente",
-        date: "2024-01-14",
-        amount: "R$ 3.200/mês",
-      },
-      {
-        id: 3,
-        client: "Pedro Costa",
-        vehicle: "VW T-Cross",
-        status: "aprovado",
-        date: "2024-01-13",
-        amount: "R$ 2.950/mês",
-      },
-    ],
-  },
-};
-
-interface DashboardProps {
-  userType?: "cliente" | "agente";
-  userName?: string;
+// --- INTERFACES PARA OS DADOS VINDOS DA API ---
+interface UserData {
+  id: number;
+  nome: string;
+  nivelAcesso: "CLIENTE" | "AGENTE";
+  accessToken: string;
+}
+interface LocacaoResponse {
+  id: number;
+  retirada: string;
+  valorPrevisto: number;
+  status: "RESERVADA" | "ATIVA" | "CONCLUIDA" | "CANCELADA";
+  carroMarca: string;
+  carroModelo: string;
 }
 
 const Dashboard = () => {
-  const [user, setUser] = useState<{
-    nome: string;
-    nivelAcesso: string;
-  } | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [locacoes, setLocacoes] = useState<LocacaoResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Efeito para ler do localStorage quando o componente carregar
+  // Efeito para buscar os dados do usuário e suas locações
   useEffect(() => {
-    const userDataString = localStorage.getItem("user");
-    if (userDataString) {
-      setUser(JSON.parse(userDataString));
-    }
-  }, []);
+    const fetchDashboardData = async () => {
+      const userDataString = localStorage.getItem("user");
+      if (!userDataString) {
+        setError("Usuário não autenticado. Por favor, faça o login.");
+        setIsLoading(false);
+        return;
+      }
 
-  if (!user) {
-    return <div>Carregando informações do usuário...</div>;
-  }
+      const parsedUser: UserData = JSON.parse(userDataString);
+      setUser(parsedUser);
 
-  const data =
-    dashboardData[user.nivelAcesso === "AGENTE" ? "agente" : "cliente"];
+      // Define o endpoint com base no tipo de usuário
+      const endpoint =
+        parsedUser.nivelAcesso === "AGENTE"
+          ? "http://localhost:8080/api/locacoes" // Endpoint para Agente (busca tudo)
+          : `http://localhost:8080/api/clientes/${parsedUser.id}/locacoes`; // Endpoint para Cliente
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; label: string }> = {
-      aprovado: { variant: "default", label: "Aprovado" },
-      analise: { variant: "secondary", label: "Em Análise" },
-      pendente: { variant: "outline", label: "Pendente" },
+      try {
+        const response = await fetch(endpoint, {
+          headers: { Authorization: `Bearer ${parsedUser.accessToken}` },
+        });
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar os dados do dashboard.");
+        }
+
+        const data = await response.json();
+        setLocacoes(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    const statusInfo = variants[status] || variants.pendente;
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+    fetchDashboardData();
+  }, []);
+
+  // --- CÁLCULOS DINÂMICOS ---
+  // useMemo otimiza os cálculos para que só sejam refeitos se 'locacoes' mudar
+  const dashboardData = useMemo(() => {
+    if (!user) return null;
+
+    // Lógica para Cliente
+    if (user.nivelAcesso === "CLIENTE") {
+      const hoje = new Date();
+      const ultimoDiaDoMes = new Date(
+        hoje.getFullYear(),
+        hoje.getMonth() + 1,
+        0
+      );
+      const diffTime = ultimoDiaDoMes.getTime() - hoje.getTime();
+      const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const totalPedidos = locacoes.length;
+      const contratosVigentes = locacoes.filter(
+        (loc) => loc.status === "ATIVA"
+      ).length;
+
+      return {
+        stats: [
+          {
+            title: "Pedidos Ativos",
+            value: totalPedidos.toString(),
+            icon: FileText,
+            color: "text-blue-ocean",
+          },
+          {
+            title: "Contratos Vigentes",
+            value: contratosVigentes.toString(),
+            icon: Car,
+            color: "text-green-600",
+          },
+          {
+            title: "Histórico Total",
+            value: totalPedidos.toString(),
+            icon: Clock,
+            color: "text-muted-foreground",
+          },
+          {
+            title: "Próximo Vencimento",
+            value: `${diasRestantes} dias`,
+            icon: Calendar,
+            color: "text-orange-500",
+          },
+        ],
+        recentOrders: locacoes.slice(0, 3), // Pega os 3 mais recentes
+      };
+    }
+
+    // Lógica para Agente (com placeholders onde a API não fornece dados diretos)
+    if (user.nivelAcesso === "AGENTE") {
+      const pedidosPendentes = locacoes.filter(
+        (loc) => loc.status === "RESERVADA"
+      ).length;
+
+      return {
+        stats: [
+          {
+            title: "Pedidos Pendentes",
+            value: pedidosPendentes.toString(),
+            icon: AlertCircle,
+            color: "text-orange-500",
+          },
+          {
+            title: "Aprovados Hoje",
+            value: "N/D",
+            icon: CheckCircle,
+            color: "text-green-600",
+          }, // Exigiria endpoint específico
+          {
+            title: "Receita Mensal",
+            value: "N/D",
+            icon: DollarSign,
+            color: "text-blue-ocean",
+          }, // Exigiria endpoint específico
+          {
+            title: "Clientes Ativos",
+            value: "N/D",
+            icon: Users,
+            color: "text-purple-600",
+          }, // Exigiria endpoint específico
+        ],
+        recentOrders: locacoes
+          .filter((loc) => loc.status === "RESERVADA")
+          .slice(0, 3),
+      };
+    }
+
+    return null;
+  }, [user, locacoes]);
+
+  const getStatusBadge = (status: LocacaoResponse["status"]) => {
+    const variants = {
+      ATIVA: { label: "Ativa", className: "bg-green-100 text-green-800" },
+      RESERVADA: {
+        label: "Pendente",
+        className: "bg-yellow-100 text-yellow-800",
+      },
+      CONCLUIDA: { label: "Concluída", className: "bg-blue-100 text-blue-800" },
+      CANCELADA: { variant: "destructive" as const, label: "Cancelada" },
+    };
+    const statusInfo = variants[status] || { label: status, className: "" };
+    return (
+      <Badge variant={statusInfo.variant} className={statusInfo.className}>
+        {statusInfo.label}
+      </Badge>
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Carregando...
+      </div>
+    );
+  }
+
+  if (error || !user || !dashboardData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+        <ServerCrash className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold text-destructive mb-2">
+          Erro ao carregar dashboard
+        </h2>
+        <p className="text-muted-foreground">
+          {error || "Não foi possível carregar os dados do usuário."}
+        </p>
+        <Button onClick={() => window.location.reload()} className="mt-6">
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar userType={user.nivelAcesso} userName={user.nome} />
-
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <h1 className="text-3xl font-bold ...">Bem-vindo, {user.nome}!</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Bem-vindo, {user.nome}!
+            </h1>
             <p className="text-muted-foreground">
-              {user.nivelAcesso === "AGENTE" // Use user.nivelAcesso
+              {user.nivelAcesso === "AGENTE"
                 ? "Gerencie pedidos, contratos e análises financeiras"
                 : "Acompanhe seus pedidos e contratos de aluguel"}
             </p>
@@ -191,8 +246,7 @@ const Dashboard = () => {
                 : "/novo-pedido"
             }
           >
-            {/* O conteúdo do botão também precisa ser atualizado */}
-            <Button className="bg-blue-gradient ...">
+            <Button className="bg-blue-gradient hover:bg-blue-gradient-dark text-white">
               <Plus className="mr-2 h-4 w-4" />
               {user.nivelAcesso === "AGENTE"
                 ? "Avaliar Pedidos"
@@ -201,9 +255,8 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {data.stats.map((stat, index) => (
+          {dashboardData.stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-soft transition-smooth">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -220,9 +273,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Orders */}
+        <div className="grid grid-cols-2 gap-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -238,29 +289,25 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {data.recentOrders.map((order) => (
+              {dashboardData.recentOrders.map((loc) => (
                 <div
-                  key={order.id}
+                  key={loc.id}
                   className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-smooth"
                 >
                   <div className="space-y-1">
-                    {user.nivelAcesso === "AGENTE" && (
-                      <p className="text-sm font-medium text-foreground">
-                        {(order as any).client}
-                      </p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {order.vehicle}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{`${loc.carroMarca} ${loc.carroModelo}`}</p>
                     <p className="text-xs text-muted-foreground">
-                      {order.date}
+                      {new Date(loc.retirada).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   <div className="text-right space-y-2">
                     <p className="text-sm font-semibold text-foreground">
-                      {order.amount}
+                      {loc.valorPrevisto.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </p>
-                    {getStatusBadge(order.status)}
+                    {getStatusBadge(loc.status)}
                   </div>
                 </div>
               ))}
@@ -271,7 +318,7 @@ const Dashboard = () => {
                     : "/meus-pedidos"
                 }
               >
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full mt-2">
                   Ver Todos os Pedidos
                 </Button>
               </Link>
@@ -279,43 +326,43 @@ const Dashboard = () => {
           </Card>
 
           {/* Quick Actions */}
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
                 Ações Rápidas
               </CardTitle>
+
               <CardDescription>
                 Acesse rapidamente as principais funcionalidades
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-3">
               {user.nivelAcesso === "AGENTE" ? (
                 <>
-                  <Link to="/avaliar-pedidos" className="block">
+                  <Link to="/ManageAllOrders" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <AlertCircle className="mr-2 h-4 w-4" />
                       Avaliar Pedidos Pendentes
                     </Button>
                   </Link>
+
                   <Link to="/analise-financeira" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <DollarSign className="mr-2 h-4 w-4" />
                       Análise Financeira
                     </Button>
                   </Link>
+
                   <Link to="/contratos" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <FileText className="mr-2 h-4 w-4" />
                       Gerenciar Contratos
                     </Button>
                   </Link>
-                  <Link to="/cadastro-clientes" className="block">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Users className="mr-2 h-4 w-4" />
-                      Cadastro de Clientes
-                    </Button>
-                  </Link>
+
                   <Link to="/cadastro-frota" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <Car className="mr-2 h-4 w-4" />
@@ -331,12 +378,14 @@ const Dashboard = () => {
                       Fazer Novo Pedido
                     </Button>
                   </Link>
+
                   <Link to="/meus-pedidos" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <FileText className="mr-2 h-4 w-4" />
                       Meus Pedidos
                     </Button>
                   </Link>
+
                   <Link to="/historico" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <Clock className="mr-2 h-4 w-4" />

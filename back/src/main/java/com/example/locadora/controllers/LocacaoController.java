@@ -59,7 +59,9 @@ public class LocacaoController {
 
     // READ - by cliente
     @GetMapping("/clientes/{clienteId}/locacoes")
-    public ResponseEntity<List<Locacao>> listByCliente(@PathVariable Long clienteId) {
+    // 2. MUDE O TIPO DE RETORNO para o seu DTO
+    public ResponseEntity<List<LocacaoResponse>> listByCliente(@PathVariable Long clienteId) {
+        // O corpo do método continua igual, pois o service já retorna o tipo correto
         return ResponseEntity.ok(service.listByCliente(clienteId));
     }
 
