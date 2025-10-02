@@ -18,9 +18,9 @@ import {
   PlusCircle,
   ServerCrash,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast"; // Supondo que você tenha um hook de toast
+import { useToast } from "@/hooks/use-toast";
 
-// --- INTERFACES PARA TIPAGEM ---
+// --- INTERFACES CORRIGIDAS ---
 interface UserData {
   id: number;
   nome: string;
@@ -35,7 +35,7 @@ interface Endereco {
   cidade: string;
   estado: string;
   cep: string;
-  user_id: string;
+  // user_id foi REMOVIDO daqui
 }
 interface Trabalho {
   id?: number;
@@ -50,14 +50,14 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [existingAddress, setExistingAddress] = useState<Endereco | null>(null);
   const [hasCheckedAddress, setHasCheckedAddress] = useState(false);
-  const [newAddress, setNewAddress] = useState<Endereco>({
+  // --- ESTADO INICIAL CORRIGIDO ---
+  const [newAddress, setNewAddress] = useState<Omit<Endereco, "id">>({
     rua: "",
     numero: "",
     complemento: "",
     cidade: "",
     estado: "",
     cep: "",
-    user_id: "",
   });
   const [existingJobs, setExistingJobs] = useState<Trabalho[]>([]);
   const [newJob, setNewJob] = useState({ empresa: "", cargo: "", salario: "" });
@@ -65,6 +65,7 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // useEffect está OK, sem alterações necessárias
   useEffect(() => {
     const fetchUserData = async () => {
       const userDataString = localStorage.getItem("user");
@@ -74,48 +75,47 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
         return;
       }
       const parsedUser = JSON.parse(userDataString);
-      setUser(parsedUser);
+      if (parsedUser && parsedUser.id) {
+        setUser(parsedUser);
+        try {
+          const token = parsedUser.accessToken;
+          const userId = parsedUser.id;
 
-      try {
-        const token = parsedUser.accessToken;
-        const userId = parsedUser.id;
+          const [addressRes, jobsRes] = await Promise.all([
+            fetch(`http://localhost:8080/api/users/${userId}/endereco`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`http://localhost:8080/api/users/${userId}/trabalhos`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
 
-        const [jobsRes] = await Promise.all([
-          // fetch(`http://localhost:8080/api/users/${userId}/endereco`, {
-          //   headers: { Authorization: `Bearer ${token}` },
-          // }),
-          fetch(`http://localhost:8080/api/users/${userId}/trabalhos`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+          if (addressRes.ok) {
+            setExistingAddress(await addressRes.json());
+          } else if (addressRes.status !== 404) {
+            throw new Error("Falha ao verificar endereço.");
+          }
+          setHasCheckedAddress(true);
 
-        // if (addressRes.ok) {
-        //   setExistingAddress(await addressRes.json());
-        // } else if (addressRes.status !== 404) {
-        //   throw new Error("Falha ao verificar endereço.");
-        // }
-        setHasCheckedAddress(true);
-
-        if (jobsRes.ok) {
-          setExistingJobs(await jobsRes.json());
-        } else {
-          throw new Error("Falha ao buscar trabalhos.");
+          if (jobsRes.ok) {
+            setExistingJobs(await jobsRes.json());
+          } else {
+            throw new Error("Falha ao buscar trabalhos.");
+          }
+        } catch (err: any) {
+          setError(err.message || "Erro ao carregar dados.");
+        } finally {
+          setIsLoading(false);
         }
-      } catch (err: any) {
-        setError(err.message || "Erro ao carregar dados.");
-        toast({
-          title: "Erro",
-          description: err.message,
-          variant: "destructive",
-        });
-      } finally {
+      } else {
+        setError("Sessão de usuário inválida.");
         setIsLoading(false);
       }
     };
     fetchUserData();
-  }, [toast]);
+  }, []);
 
-  const handleAddressChange = (field: keyof Endereco, value: string) =>
+  const handleAddressChange = (field: keyof typeof newAddress, value: string) =>
     setNewAddress((prev) => ({ ...prev, [field]: value }));
   const handleJobChange = (field: keyof typeof newJob, value: string) =>
     setNewJob((prev) => ({ ...prev, [field]: value }));
@@ -131,8 +131,6 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
     }
     if (!user) return;
 
-    const localDate = new Date();
-
     setIsSubmitting(true);
     try {
       const response = await fetch(
@@ -143,11 +141,10 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${user.accessToken}`,
           },
+          // --- CORREÇÃO: ENVIANDO APENAS OS DADOS DO TRABALHO ---
           body: JSON.stringify({
             ...newJob,
             salario: parseFloat(newJob.salario),
-            comeco: localDate,
-            user_id: user.id,
           }),
         }
       );
@@ -169,14 +166,28 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
 
   const onNext = async () => {
     if (!user) return;
-    if (!existingAddress && !newAddress.rua) {
+
+    // --- CORREÇÃO: VALIDAÇÃO COMPLETA RESTAURADA ---
+    let isAddressValid = false;
+    if (existingAddress) {
+      isAddressValid = true;
+    } else {
+      const { rua, numero, cidade, estado, cep } = newAddress;
+      if (rua && numero && cidade && estado && cep) {
+        isAddressValid = true;
+      }
+    }
+
+    if (!isAddressValid) {
       toast({
-        title: "Pendente",
-        description: "O endereço é obrigatório.",
+        title: "Endereço incompleto",
+        description:
+          "Por favor, preencha todos os campos obrigatórios do endereço.",
         variant: "destructive",
       });
       return;
     }
+
     if (existingJobs.length === 0) {
       toast({
         title: "Pendente",
@@ -188,7 +199,7 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
 
     setIsSubmitting(true);
     try {
-      if (!existingAddress && newAddress.rua) {
+      if (!existingAddress && isAddressValid) {
         const response = await fetch(
           `http://localhost:8080/api/users/${user.id}/endereco`,
           {
@@ -197,11 +208,11 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${user.accessToken}`,
             },
-            body: JSON.stringify({ user_id: user.id, newAddress }),
+            // --- CORREÇÃO: ENVIANDO APENAS OS DADOS DO ENDEREÇO ---
+            body: JSON.stringify(newAddress),
           }
         );
         if (!response.ok) throw new Error("Falha ao salvar o endereço.");
-        console.log(response);
       }
       handleNextStep();
     } catch (err: any) {
@@ -214,26 +225,6 @@ export const CadastroDadosAdicionais = ({ handleNextStep, handlePrevStep }) => {
       setIsSubmitting(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-10">
-        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-        Carregando seus dados...
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center p-10 text-destructive">
-        <ServerCrash className="h-10 w-10 mb-2" />
-        <p>{error}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">
-          Tentar Novamente
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <Card>
