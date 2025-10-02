@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import NewOrder from "./pages/NewOrder";
 import Cars from "./pages/Cars";
 import CadastroCliente from "./pages/CadastroCliente";
+import ManageAllOrders from "./pages/ClientOrdersAll";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/meus-pedidos" element={<ClientOrders />} />
           <Route path="/avaliar-pedidos" element={<AgentOrders />} />
+          <Route path="/ManageAllOrders" element={<ManageAllOrders />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

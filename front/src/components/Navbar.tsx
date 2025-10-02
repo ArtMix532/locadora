@@ -12,7 +12,7 @@ import { Car, User, LogOut, Settings, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 interface NavbarProps {
-  userType?: "cliente" | "agente";
+  userType?: "cliente" | "AGENTE";
   userName?: string;
 }
 
@@ -41,9 +41,9 @@ const Navbar = ({
   const agenteMenuItems = [
     { path: "/dashboard", label: "Dashboard", active: isActive("/dashboard") },
     {
-      path: "/avaliar-pedidos",
+      path: "/ManageAllOrders",
       label: "Avaliar Pedidos",
-      active: isActive("/avaliar-pedidos"),
+      active: isActive("/ManageAllOrders"),
     },
     { path: "/contratos", label: "Contratos", active: isActive("/contratos") },
     {
@@ -55,7 +55,7 @@ const Navbar = ({
     { path: "/veiculos", label: "Veículos", active: isActive("/veiculos") },
   ];
 
-  const menuItems = userType === "agente" ? agenteMenuItems : clienteMenuItems;
+  const menuItems = userType === "AGENTE" ? agenteMenuItems : clienteMenuItems;
 
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -130,10 +130,12 @@ const Navbar = ({
                   <span>Configurações</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <Link to="/login">Sair</Link>
-                </DropdownMenuItem>
+                <Link to="/login">
+                  <DropdownMenuItem>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </Link>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
