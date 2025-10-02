@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,73 +25,96 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Navbar from "@/components/Navbar";
-import { Search, Filter, Eye, Edit, X, Calendar, Car } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  X,
+  Calendar,
+  Car,
+  Loader2,
+  ServerCrash,
+} from "lucide-react";
 
-// Mock data
-const orders = [
-  {
-    id: "PED-2024-001",
-    vehicle: "Toyota Corolla 2023",
-    status: "aprovado",
-    requestDate: "2024-01-15",
-    startDate: "2024-02-01",
-    endDate: "2024-08-01",
-    monthlyValue: "R$ 2.800",
-    totalValue: "R$ 16.800",
-    agent: "Banco XYZ",
-  },
-  {
-    id: "PED-2024-002",
-    vehicle: "Honda HR-V 2023",
-    status: "analise",
-    requestDate: "2024-01-10",
-    startDate: "2024-02-15",
-    endDate: "2024-08-15",
-    monthlyValue: "R$ 3.200",
-    totalValue: "R$ 19.200",
-    agent: "AutoFinance",
-  },
-  {
-    id: "PED-2024-003",
-    vehicle: "VW T-Cross 2022",
-    status: "pendente",
-    requestDate: "2024-01-08",
-    startDate: "2024-02-20",
-    endDate: "2024-08-20",
-    monthlyValue: "R$ 2.950",
-    totalValue: "R$ 17.700",
-    agent: "Empresa ABC",
-  },
-  {
-    id: "PED-2023-045",
-    vehicle: "Hyundai HB20 2022",
-    status: "cancelado",
-    requestDate: "2023-12-15",
-    startDate: "2024-01-01",
-    endDate: "2024-07-01",
-    monthlyValue: "R$ 2.400",
-    totalValue: "R$ 14.400",
-    agent: "Banco XYZ",
-  },
-  {
-    id: "PED-2023-032",
-    vehicle: "Renault Kwid 2021",
-    status: "concluido",
-    requestDate: "2023-10-10",
-    startDate: "2023-11-01",
-    endDate: "2024-01-31",
-    monthlyValue: "R$ 2.100",
-    totalValue: "R$ 6.300",
-    agent: "AutoFinance",
-  },
-];
-import React, { useEffect } from "react";
+// src/services/api.ts
+
+// --- INTERFACES PARA OS DADOS VINDOS DA API ---
+interface UserData {
+  id: number;
+  nome: string;
+  nivelAcesso: string;
+  accessToken: string;
+}
+interface LocacaoResponse {
+  id: number;
+  clienteId: number;
+  agenteId: number;
+  carroId: number;
+  retirada: string;
+  devolucao: string;
+  valorPrevisto: number;
+  status: "RESERVADA" | "ATIVA" | "CONCLUIDA" | "CANCELADA";
+  clienteNome: string;
+  agenteNome: string;
+  carroMarca: string;
+  carroModelo: string;
+}
 
 const ClientOrders = () => {
+  // --- ESTADOS PARA DADOS REAIS, LOADING E ERRO ---
+  const [locacoes, setLocacoes] = useState<LocacaoResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
+
+  // Estados para os filtros continuam os mesmos
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
 
-  const getStatusBadge = (status: string) => {
+  // --- BUSCA OS DADOS DA API QUANDO O COMPONENTE CARREGA ---
+  useEffect(() => {
+    const fetchClientData = async () => {
+      const userDataString = localStorage.getItem("user");
+      if (!userDataString) {
+        setError("Usuário não autenticado. Por favor, faça o login.");
+        setIsLoading(false);
+        return;
+      }
+
+      const parsedUser: UserData = JSON.parse(userDataString);
+      setUser(parsedUser);
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/clientes/${parsedUser.id}/locacoes`,
+          { headers: { Authorization: `Bearer ${parsedUser.accessToken}` } }
+        );
+        if (!response.ok)
+          throw new Error("Não foi possível carregar seus pedidos.");
+
+        const data = await response.json();
+        setLocacoes(data);
+        console.log(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchClientData();
+  }, []); // Array vazio para buscar dados apenas uma vez
+
+  const getStatusBadge = (status: LocacaoResponse["status"]) => {
+    // Mapeia o status do backend (ex: "RESERVADA") para o status do layout (ex: "pendente")
+    const statusMap = {
+      RESERVADA: "pendente",
+      ATIVA: "aprovado",
+      CONCLUIDA: "concluido",
+      CANCELADA: "cancelado",
+    };
+    const mappedStatus = statusMap[status] || "analise";
+
     const variants: Record<
       string,
       { variant: any; label: string; className?: string }
@@ -118,8 +141,7 @@ const ClientOrders = () => {
         className: "bg-blue-100 text-blue-800",
       },
     };
-
-    const statusInfo = variants[status] || variants.pendente;
+    const statusInfo = variants[mappedStatus];
     return (
       <Badge variant={statusInfo.variant} className={statusInfo.className}>
         {statusInfo.label}
@@ -127,43 +149,65 @@ const ClientOrders = () => {
     );
   };
 
-  const filteredOrders = orders.filter((order) => {
+  // --- FILTRO APLICADO AOS DADOS REAIS DO BANCO DE DADOS ---
+  const filteredOrders = locacoes.filter((loc) => {
+    const vehicleName = `${loc.carroMarca} ${loc.carroModelo}`.toLowerCase();
     const matchesSearch =
-      order.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+      vehicleName.includes(searchTerm.toLowerCase()) ||
+      `PED-${loc.id.toString().padStart(3, "0")}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+    // Mapeia o status do backend para o status do filtro
+    const statusMap = {
+      RESERVADA: "pendente",
+      ATIVA: "aprovado",
+      CONCLUIDA: "concluido",
+      CANCELADA: "cancelado",
+    };
+    const mappedStatus = statusMap[loc.status] || "analise";
+
     const matchesStatus =
-      statusFilter === "todos" || order.status === statusFilter;
+      statusFilter === "todos" || mappedStatus === statusFilter;
+
     return matchesSearch && matchesStatus;
   });
 
-  const canEdit = (status: string) =>
-    status === "pendente" || status === "analise";
-  const canCancel = (status: string) =>
-    status === "pendente" || status === "analise";
+  const canEditOrCancel = (status: LocacaoResponse["status"]) =>
+    status === "RESERVADA";
 
-  const [user, setUser] = useState<{
-    nome: string;
-    nivelAcesso: string;
-  } | null>(null);
-
-  // Efeito para ler do localStorage quando o componente carregar
-  useEffect(() => {
-    const userDataString = localStorage.getItem("user");
-    if (userDataString) {
-      setUser(JSON.parse(userDataString));
-    }
-  }, []);
-
+  // --- JSX PARA LOADING E ERRO ---
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Buscando seus
+        pedidos...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+        <ServerCrash className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold text-destructive mb-2">
+          Erro ao carregar dados
+        </h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-6">
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
   if (!user) {
-    return <div>Carregando informações do usuário...</div>;
+    return <div>Redirecionando para o login...</div>;
   }
 
+  // --- RENDERIZAÇÃO DO LAYOUT ORIGINAL COM OS DADOS REAIS ---
   return (
     <div className="min-h-screen bg-background">
       <Navbar userType={user.nivelAcesso} userName={user.nome} />
-
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Meus Pedidos
@@ -173,7 +217,6 @@ const ClientOrders = () => {
           </p>
         </div>
 
-        {/* Filters */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -209,7 +252,6 @@ const ClientOrders = () => {
           </CardContent>
         </Card>
 
-        {/* Orders Table */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -219,7 +261,10 @@ const ClientOrders = () => {
                   {filteredOrders.length} pedido(s) encontrado(s)
                 </CardDescription>
               </div>
-              <Button className="bg-blue-gradient hover:bg-blue-gradient-dark text-white">
+              <Button
+                onClick={() => (window.location.href = "/novo-pedido")}
+                className="bg-blue-gradient hover:bg-blue-gradient-dark text-white"
+              >
                 <Car className="mr-2 h-4 w-4" />
                 Novo Pedido
               </Button>
@@ -233,56 +278,56 @@ const ClientOrders = () => {
                     <TableHead>Código</TableHead>
                     <TableHead>Veículo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Data Solicitação</TableHead>
                     <TableHead>Período</TableHead>
-                    <TableHead>Valor Mensal</TableHead>
+                    <TableHead>Valor Total</TableHead>
                     <TableHead>Agente</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
-                      <TableCell>{order.vehicle}</TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell>
-                        {new Date(order.requestDate).toLocaleDateString(
-                          "pt-BR"
-                        )}
+                  {filteredOrders.map((loc) => (
+                    <TableRow key={loc.id}>
+                      <TableCell className="font-medium">
+                        PED-{loc.id.toString().padStart(3, "0")}
                       </TableCell>
+                      <TableCell>{`${loc.carroPlaca} ${loc.carroModelo}`}</TableCell>
+                      <TableCell>{getStatusBadge(loc.status)}</TableCell>
                       <TableCell className="text-sm">
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Calendar className="h-3 w-3" />
-                          {new Date(order.startDate).toLocaleDateString(
+                          {new Date(loc.retirada).toLocaleDateString(
                             "pt-BR"
-                          )}{" "}
-                          -{" "}
-                          {new Date(order.endDate).toLocaleDateString("pt-BR")}
+                          )} -{" "}
+                          {new Date(loc.devolucao).toLocaleDateString("pt-BR")}
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
-                        {order.monthlyValue}
+                        {loc.valorPrevisto.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })}
                       </TableCell>
-                      <TableCell>{order.agent}</TableCell>
+                      <TableCell>
+                        {loc.agenteId === 1 ? "Davi" : loc.agenteNome}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {canEdit(order.status) && (
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canCancel(order.status) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                          {canEditOrCancel(loc.status) && (
+                            <>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>

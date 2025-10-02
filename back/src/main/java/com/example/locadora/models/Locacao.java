@@ -50,7 +50,6 @@ public class Locacao {
     private User cliente;   // <-- troque para sua entidade de usuário
 
     /** Agente/atendente responsável */
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "agente_id", nullable = false,
         foreignKey = @ForeignKey(name = "fk_locacao_agente"))

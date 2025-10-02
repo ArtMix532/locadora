@@ -36,11 +36,6 @@ import React from "react";
 import { CadastroDadosAdicionais } from "@/components/ui/cadastroTrabalho";
 import Navbar from "@/components/Navbar";
 
-// Adicionando um mock para o useToast para evitar erros
-const useToast = () => ({
-  toast: (options) => console.log("Toast:", options.title, options.description),
-});
-
 // --- INTERFACES ---
 interface Carro {
   id: number;
@@ -76,17 +71,26 @@ interface Trabalho {
   salario: number;
 }
 
-// #########################################################################
-// ## COMPONENTE PRINCIPAL 'NewOrder'                                     ##
-// #########################################################################
+const useToast = () => {
+  return {
+    toast: ({ title, description, variant = "default" }) => {
+      // Usando console.log como alternativa para a notificação visual
+      console.log(`[Toast - ${variant}] ${title}: ${description}`);
+      // Em uma aplicação completa, você poderia usar um alert ou um modal simples aqui
+      // alert(`${title}\n${description}`);
+    },
+  };
+};
 
 const NewOrder = () => {
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
     null
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [currentStep, setCurrentStep] = useState(1);
+  const { toast } = useToast(); // Ho
   // --- Estado 'formData' e 'handleInputChange' removidos ---
 
   const [availableCars, setAvailableCars] = useState<Carro[]>([]);
@@ -155,14 +159,74 @@ const NewOrder = () => {
   const handleNextStep = () => setCurrentStep((prev) => prev + 1);
   const handlePrevStep = () => setCurrentStep((prev) => prev - 1);
 
-  const handleSubmit = () => {
-    console.log("Dados do pedido finalizados:", {
-      vehicleId: selectedVehicleId,
-      startDate,
-      endDate,
-    });
-    if (selectedVehicleId) {
-      window.location.href = `/pagamento/${selectedVehicleId}`;
+  const handleSubmit = async () => {
+    // 1. Validação inicial
+    if (!user || !selectedVehicleId || !startDate || !endDate) {
+      toast({
+        title: "Dados incompletos",
+        description: "Selecione o veículo e o período antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // --- CORREÇÃO FINAL APLICADA AQUI ---
+    // Renomeamos as chaves para bater com o DTO do backend (clienteId, carroId, etc.)
+    const locacaoData = {
+      clienteId: user.id,
+      carroId: selectedVehicleId,
+      agenteId: 1, // Placeholder
+      retirada: startDate.toISOString(),
+      devolucao: endDate.toISOString(),
+      valorPrevisto: calculateTotal(),
+      tipo: "ONLINE", // Valor Padrão
+    };
+    // --- FIM DA CORREÇÃO ---
+
+    console.log("Enviando para o backend:", locacaoData);
+
+    try {
+      // 3. Faz a requisição POST para o endpoint de locações
+      const response = await fetch("http://localhost:8080/api/locacoes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+        body: JSON.stringify(locacaoData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Pedido de locação enviado!",
+          description: "Sua reserva foi criada e está em análise.",
+        });
+        window.location.href = `/dashboard`;
+      } else {
+        // Lógica de erro melhorada para evitar o crash do 'json()'
+        let errorMessage = "Não foi possível criar a locação.";
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (e) {
+          console.error(
+            "Não foi possível parsear a resposta de erro como JSON."
+          );
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar pedido",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
