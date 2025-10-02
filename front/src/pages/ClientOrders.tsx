@@ -1,10 +1,29 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import Navbar from "@/components/Navbar";
 import { Search, Filter, Eye, Edit, X, Calendar, Car } from "lucide-react";
 
@@ -19,10 +38,10 @@ const orders = [
     endDate: "2024-08-01",
     monthlyValue: "R$ 2.800",
     totalValue: "R$ 16.800",
-    agent: "Banco XYZ"
+    agent: "Banco XYZ",
   },
   {
-    id: "PED-2024-002", 
+    id: "PED-2024-002",
     vehicle: "Honda HR-V 2023",
     status: "analise",
     requestDate: "2024-01-10",
@@ -30,7 +49,7 @@ const orders = [
     endDate: "2024-08-15",
     monthlyValue: "R$ 3.200",
     totalValue: "R$ 19.200",
-    agent: "AutoFinance"
+    agent: "AutoFinance",
   },
   {
     id: "PED-2024-003",
@@ -41,7 +60,7 @@ const orders = [
     endDate: "2024-08-20",
     monthlyValue: "R$ 2.950",
     totalValue: "R$ 17.700",
-    agent: "Empresa ABC"
+    agent: "Empresa ABC",
   },
   {
     id: "PED-2023-045",
@@ -52,7 +71,7 @@ const orders = [
     endDate: "2024-07-01",
     monthlyValue: "R$ 2.400",
     totalValue: "R$ 14.400",
-    agent: "Banco XYZ"
+    agent: "Banco XYZ",
   },
   {
     id: "PED-2023-032",
@@ -63,23 +82,43 @@ const orders = [
     endDate: "2024-01-31",
     monthlyValue: "R$ 2.100",
     totalValue: "R$ 6.300",
-    agent: "AutoFinance"
-  }
+    agent: "AutoFinance",
+  },
 ];
+import React, { useEffect } from "react";
 
 const ClientOrders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; label: string; className?: string }> = {
-      aprovado: { variant: "default", label: "Aprovado", className: "bg-green-100 text-green-800" },
-      analise: { variant: "secondary", label: "Em Análise", className: "bg-yellow-100 text-yellow-800" },
-      pendente: { variant: "outline", label: "Pendente", className: "bg-orange-100 text-orange-800" },
+    const variants: Record<
+      string,
+      { variant: any; label: string; className?: string }
+    > = {
+      aprovado: {
+        variant: "default",
+        label: "Aprovado",
+        className: "bg-green-100 text-green-800",
+      },
+      analise: {
+        variant: "secondary",
+        label: "Em Análise",
+        className: "bg-yellow-100 text-yellow-800",
+      },
+      pendente: {
+        variant: "outline",
+        label: "Pendente",
+        className: "bg-orange-100 text-orange-800",
+      },
       cancelado: { variant: "destructive", label: "Cancelado" },
-      concluido: { variant: "default", label: "Concluído", className: "bg-blue-100 text-blue-800" },
+      concluido: {
+        variant: "default",
+        label: "Concluído",
+        className: "bg-blue-100 text-blue-800",
+      },
     };
-    
+
     const statusInfo = variants[status] || variants.pendente;
     return (
       <Badge variant={statusInfo.variant} className={statusInfo.className}>
@@ -88,24 +127,47 @@ const ClientOrders = () => {
     );
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "todos" || order.status === statusFilter;
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "todos" || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const canEdit = (status: string) => status === "pendente" || status === "analise";
-  const canCancel = (status: string) => status === "pendente" || status === "analise";
+  const canEdit = (status: string) =>
+    status === "pendente" || status === "analise";
+  const canCancel = (status: string) =>
+    status === "pendente" || status === "analise";
+
+  const [user, setUser] = useState<{
+    nome: string;
+    nivelAcesso: string;
+  } | null>(null);
+
+  // Efeito para ler do localStorage quando o componente carregar
+  useEffect(() => {
+    const userDataString = localStorage.getItem("user");
+    if (userDataString) {
+      setUser(JSON.parse(userDataString));
+    }
+  }, []);
+
+  if (!user) {
+    return <div>Carregando informações do usuário...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar userType="cliente" userName="João Silva" />
-      
+      <Navbar userType={user.nivelAcesso} userName={user.nome} />
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Meus Pedidos</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Meus Pedidos
+          </h1>
           <p className="text-muted-foreground">
             Acompanhe o status dos seus pedidos de aluguel de veículos
           </p>
@@ -184,14 +246,24 @@ const ClientOrders = () => {
                       <TableCell className="font-medium">{order.id}</TableCell>
                       <TableCell>{order.vehicle}</TableCell>
                       <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell>{new Date(order.requestDate).toLocaleDateString('pt-BR')}</TableCell>
+                      <TableCell>
+                        {new Date(order.requestDate).toLocaleDateString(
+                          "pt-BR"
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm">
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Calendar className="h-3 w-3" />
-                          {new Date(order.startDate).toLocaleDateString('pt-BR')} - {new Date(order.endDate).toLocaleDateString('pt-BR')}
+                          {new Date(order.startDate).toLocaleDateString(
+                            "pt-BR"
+                          )}{" "}
+                          -{" "}
+                          {new Date(order.endDate).toLocaleDateString("pt-BR")}
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold text-green-600">{order.monthlyValue}</TableCell>
+                      <TableCell className="font-semibold text-green-600">
+                        {order.monthlyValue}
+                      </TableCell>
                       <TableCell>{order.agent}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -204,7 +276,11 @@ const ClientOrders = () => {
                             </Button>
                           )}
                           {canCancel(order.status) && (
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           )}

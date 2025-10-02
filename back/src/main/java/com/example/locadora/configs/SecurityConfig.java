@@ -42,7 +42,8 @@ public class SecurityConfig {
                 // 4. Define as regras de autorização
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/").permitAll()
                         .anyRequest().authenticated()
                 )
                 

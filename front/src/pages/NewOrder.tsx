@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,149 +9,197 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import Navbar from "@/components/Navbar";
-import { CalendarIcon, Car, CreditCard, FileText, User } from "lucide-react";
+import {
+  CalendarIcon,
+  Car,
+  CreditCard,
+  FileText,
+  User,
+  ServerCrash,
+  // --- IMPORTS ADICIONADOS ---
+  Home,
+  Briefcase,
+  Loader2,
+  CheckCircle,
+  PlusCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import React from "react";
+import { CadastroDadosAdicionais } from "@/components/ui/cadastroTrabalho";
+import Navbar from "@/components/Navbar";
 
-// Mock data dos veículos disponíveis
-const availableVehicles = [
-  {
-    id: 1,
-    name: "Renault Kwid",
-    category: "Econômico",
-    monthlyPrice: 2100,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 2,
-    name: "Fiat Argo",
-    category: "Compacto",
-    monthlyPrice: 2400,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 3,
-    name: "Hyundai HB20",
-    category: "Compacto",
-    monthlyPrice: 2450,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 4,
-    name: "Toyota Corolla",
-    category: "Sedan",
-    monthlyPrice: 2800,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 5,
-    name: "Volkswagen T-Cross",
-    category: "SUV",
-    monthlyPrice: 2950,
-    image: "/placeholder.svg",
-  },
-  {
-    id: 6,
-    name: "Honda HR-V",
-    category: "SUV",
-    monthlyPrice: 3200,
-    image: "/placeholder.svg",
-  },
-];
+// Adicionando um mock para o useToast para evitar erros
+const useToast = () => ({
+  toast: (options) => console.log("Toast:", options.title, options.description),
+});
+
+// --- INTERFACES ---
+interface Carro {
+  id: number;
+  matricula: string;
+  modelo: string;
+  marca: string;
+  placa: string;
+  ano: number;
+  disponivel: boolean;
+  valor: number;
+  category: string;
+}
+// Interface de usuário mais completa para a Etapa 3
+interface UserData {
+  id: number;
+  nome: string;
+  nivelAcesso: string;
+  accessToken: string;
+}
+interface Endereco {
+  id?: number;
+  rua: string;
+  numero: string;
+  complemento: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+}
+interface Trabalho {
+  id?: number;
+  empresa: string;
+  cargo: string;
+  salario: number;
+}
+
+// #########################################################################
+// ## COMPONENTE PRINCIPAL 'NewOrder'                                     ##
+// #########################################################################
 
 const NewOrder = () => {
-  const [selectedVehicle, setSelectedVehicle] = useState<number | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(
+    null
+  );
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    // Dados pessoais
-    fullName: "",
-    cpf: "",
-    rg: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    cep: "",
-    // Dados profissionais
-    profession: "",
-    employer1: "",
-    income1: "",
-    employer2: "",
-    income2: "",
-    employer3: "",
-    income3: "",
-    // Observações
-    observations: "",
-  });
+  // --- Estado 'formData' e 'handleInputChange' removidos ---
 
-  const selectedVehicleData = availableVehicles.find(
-    (v) => v.id === selectedVehicle
+  const [availableCars, setAvailableCars] = useState<Carro[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // --- Estado 'user' atualizado para usar a interface completa ---
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      const userDataString = localStorage.getItem("user");
+      if (userDataString) {
+        setUser(JSON.parse(userDataString));
+      } else {
+        setError("Usuário não autenticado.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const token = JSON.parse(userDataString).accessToken;
+        const response = await fetch(
+          "http://localhost:8080/api/carros/disponiveis",
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Erro ao buscar os carros: ${response.statusText}`);
+        }
+
+        const dataFromApi: Omit<Carro, "category">[] = await response.json();
+        const carsWithCategory = dataFromApi.map((car) => ({
+          ...car,
+          category: car.modelo.toLowerCase().includes("suv") ? "SUV" : "Sedan",
+        }));
+        setAvailableCars(carsWithCategory);
+      } catch (err: any) {
+        setError(err.message || "Não foi possível carregar a frota.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
+
+  const selectedVehicleData = availableCars.find(
+    (car) => car.id === selectedVehicleId
   );
 
-  const calculateMonths = () => {
-    if (!startDate || !endDate) return 0;
+  const calculateDays = () => {
+    if (!startDate || !endDate || endDate < startDate) return 0;
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return Math.ceil(diffDays / 30);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
   const calculateTotal = () => {
-    const months = calculateMonths();
-    return selectedVehicleData ? selectedVehicleData.monthlyPrice * months : 0;
+    const days = calculateDays();
+    return selectedVehicleData ? selectedVehicleData.valor * days : 0;
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleNextStep = () => {
-    setCurrentStep((prev) => prev + 1);
-  };
-
-  const handlePrevStep = () => {
-    setCurrentStep((prev) => prev - 1);
-  };
+  const handleNextStep = () => setCurrentStep((prev) => prev + 1);
+  const handlePrevStep = () => setCurrentStep((prev) => prev - 1);
 
   const handleSubmit = () => {
-    // Aqui você integraria com seu backend
-    console.log("Dados do pedido:", {
-      vehicle: selectedVehicleData,
+    console.log("Dados do pedido finalizados:", {
+      vehicleId: selectedVehicleId,
       startDate,
       endDate,
-      months: calculateMonths(),
-      totalValue: calculateTotal(),
-      formData,
     });
-
-    // Redirecionar para página de pagamento
-    window.location.href = "/pagamento";
+    if (selectedVehicleId) {
+      window.location.href = `/pagamento/${selectedVehicleId}`;
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Carregando dados...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
+        <ServerCrash className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold text-destructive mb-2">
+          Erro ao carregar dados
+        </h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-6">
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
+  if (!user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        Redirecionando...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar userType="cliente" userName="João Silva" />
-
+      <Navbar userType={user.nivelAcesso} userName={user.nome} />
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             Novo Pedido de Aluguel
@@ -160,8 +208,6 @@ const NewOrder = () => {
             Solicite o aluguel do veículo dos seus sonhos
           </p>
         </div>
-
-        {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-between max-w-md mx-auto">
             {[1, 2, 3, 4].map((step) => (
@@ -208,39 +254,38 @@ const NewOrder = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {availableVehicles.map((vehicle) => (
+                  {availableCars.map((carro) => (
                     <Card
-                      key={vehicle.id}
+                      key={carro.id}
                       className={`cursor-pointer transition-all hover:shadow-lg ${
-                        selectedVehicle === vehicle.id
+                        selectedVehicleId === carro.id
                           ? "ring-2 ring-blue-500 bg-blue-50"
                           : ""
                       }`}
-                      onClick={() => setSelectedVehicle(vehicle.id)}
+                      onClick={() => setSelectedVehicleId(carro.id)}
                     >
                       <CardHeader className="pb-2">
                         <div className="aspect-video bg-muted rounded-lg mb-3 flex items-center justify-center">
                           <Car className="h-12 w-12 text-muted-foreground" />
                         </div>
-                        <CardTitle className="text-lg">
-                          {vehicle.name}
-                        </CardTitle>
-                        <CardDescription>{vehicle.category}</CardDescription>
+                        <CardTitle className="text-lg">{`${carro.marca} ${carro.modelo}`}</CardTitle>
+                        <CardDescription>
+                          {carro.category} - {carro.ano}
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold text-green-600 mb-2">
-                          R$ {vehicle.monthlyPrice.toLocaleString("pt-BR")}
+                          R$ {carro.valor.toLocaleString("pt-BR")}
                         </div>
-                        <p className="text-sm text-muted-foreground">por mês</p>
+                        <p className="text-sm text-muted-foreground">por dia</p>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-
                 <div className="flex justify-end mt-6">
                   <Button
                     onClick={handleNextStep}
-                    disabled={!selectedVehicle}
+                    disabled={!selectedVehicleId}
                     className="bg-blue-gradient hover:bg-blue-gradient-dark text-white"
                   >
                     Próximo
@@ -291,7 +336,6 @@ const NewOrder = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Data de Término</Label>
                     <Popover>
@@ -314,22 +358,20 @@ const NewOrder = () => {
                           mode="single"
                           selected={endDate}
                           onSelect={setEndDate}
+                          disabled={(date) => date < (startDate || new Date())}
                           initialFocus
                         />
                       </PopoverContent>
                     </Popover>
                   </div>
                 </div>
-
                 {startDate && endDate && selectedVehicleData && (
                   <Card className="bg-blue-50 border-blue-200">
                     <CardContent className="pt-6">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Período</p>
-                          <p className="font-medium">
-                            {calculateMonths()} meses
-                          </p>
+                          <p className="font-medium">{calculateDays()} dias</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">
@@ -343,7 +385,6 @@ const NewOrder = () => {
                     </CardContent>
                   </Card>
                 )}
-
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={handlePrevStep}>
                     Anterior
@@ -362,232 +403,14 @@ const NewOrder = () => {
 
           {/* Step 3: Dados Pessoais */}
           {currentStep === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Seus Dados
-                </CardTitle>
-                <CardDescription>
-                  Preencha suas informações pessoais e profissionais
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Dados Pessoais */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Dados Pessoais</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Nome Completo *</Label>
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={(e) =>
-                          handleInputChange("fullName", e.target.value)
-                        }
-                        placeholder="Seu nome completo"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF *</Label>
-                      <Input
-                        id="cpf"
-                        value={formData.cpf}
-                        onChange={(e) =>
-                          handleInputChange("cpf", e.target.value)
-                        }
-                        placeholder="000.000.000-00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="rg">RG *</Label>
-                      <Input
-                        id="rg"
-                        value={formData.rg}
-                        onChange={(e) =>
-                          handleInputChange("rg", e.target.value)
-                        }
-                        placeholder="00.000.000-0"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-mail *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) =>
-                          handleInputChange("email", e.target.value)
-                        }
-                        placeholder="seu@email.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone *</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) =>
-                          handleInputChange("phone", e.target.value)
-                        }
-                        placeholder="(11) 99999-9999"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="profession">Profissão *</Label>
-                      <Input
-                        id="profession"
-                        value={formData.profession}
-                        onChange={(e) =>
-                          handleInputChange("profession", e.target.value)
-                        }
-                        placeholder="Sua profissão"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Endereço */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Endereço</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="address">Endereço *</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) =>
-                          handleInputChange("address", e.target.value)
-                        }
-                        placeholder="Rua, número, bairro"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cep">CEP *</Label>
-                      <Input
-                        id="cep"
-                        value={formData.cep}
-                        onChange={(e) =>
-                          handleInputChange("cep", e.target.value)
-                        }
-                        placeholder="00000-000"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="city">Cidade *</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) =>
-                          handleInputChange("city", e.target.value)
-                        }
-                        placeholder="Cidade"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">Estado *</Label>
-                      <Select
-                        value={formData.state}
-                        onValueChange={(value) =>
-                          handleInputChange("state", value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Estado" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SP">São Paulo</SelectItem>
-                          <SelectItem value="RJ">Rio de Janeiro</SelectItem>
-                          <SelectItem value="MG">Minas Gerais</SelectItem>
-                          {/* Adicione outros estados */}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dados Profissionais */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    Dados Profissionais (até 3 empregos)
-                  </h3>
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((num) => (
-                      <div
-                        key={num}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg"
-                      >
-                        <div className="space-y-2">
-                          <Label htmlFor={`employer${num}`}>
-                            Empregador {num} {num === 1 ? "*" : ""}
-                          </Label>
-                          <Input
-                            id={`employer${num}`}
-                            value={
-                              formData[
-                                `employer${num}` as keyof typeof formData
-                              ]
-                            }
-                            onChange={(e) =>
-                              handleInputChange(
-                                `employer${num}`,
-                                e.target.value
-                              )
-                            }
-                            placeholder="Nome da empresa"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`income${num}`}>
-                            Renda Mensal {num === 1 ? "*" : ""}
-                          </Label>
-                          <Input
-                            id={`income${num}`}
-                            value={
-                              formData[`income${num}` as keyof typeof formData]
-                            }
-                            onChange={(e) =>
-                              handleInputChange(`income${num}`, e.target.value)
-                            }
-                            placeholder="R$ 0,00"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Observações */}
-                <div>
-                  <Label htmlFor="observations">Observações Adicionais</Label>
-                  <Textarea
-                    id="observations"
-                    value={formData.observations}
-                    onChange={(e) =>
-                      handleInputChange("observations", e.target.value)
-                    }
-                    placeholder="Informações adicionais que considera relevantes..."
-                    className="mt-2"
-                  />
-                </div>
-
-                <div className="flex justify-between">
-                  <Button variant="outline" onClick={handlePrevStep}>
-                    Anterior
-                  </Button>
-                  <Button
-                    onClick={handleNextStep}
-                    className="bg-blue-gradient hover:bg-blue-gradient-dark text-white"
-                  >
-                    Próximo
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <CadastroDadosAdicionais
+              handleNextStep={handleNextStep}
+              handlePrevStep={handlePrevStep}
+            />
           )}
 
           {/* Step 4: Resumo */}
-          {currentStep === 4 && (
+          {currentStep === 4 && selectedVehicleData && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -599,7 +422,6 @@ const NewOrder = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Resumo do Veículo */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card className="border-blue-200 bg-blue-50">
                     <CardHeader>
@@ -608,26 +430,18 @@ const NewOrder = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {selectedVehicleData && (
-                        <div className="space-y-2">
-                          <p className="text-2xl font-bold">
-                            {selectedVehicleData.name}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {selectedVehicleData.category}
-                          </p>
-                          <p className="text-xl font-semibold text-green-600">
-                            R${" "}
-                            {selectedVehicleData.monthlyPrice.toLocaleString(
-                              "pt-BR"
-                            )}
-                            /mês
-                          </p>
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        <p className="text-2xl font-bold">{`${selectedVehicleData.marca} ${selectedVehicleData.modelo}`}</p>
+                        <p className="text-muted-foreground">
+                          {selectedVehicleData.category}
+                        </p>
+                        <p className="text-xl font-semibold text-green-600">
+                          R$ {selectedVehicleData.valor.toLocaleString("pt-BR")}
+                          /dia
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
-
                   <Card className="border-green-200 bg-green-50">
                     <CardHeader>
                       <CardTitle className="text-lg">Período e Valor</CardTitle>
@@ -637,7 +451,7 @@ const NewOrder = () => {
                         <div className="flex justify-between">
                           <span>Período:</span>
                           <span className="font-medium">
-                            {calculateMonths()} meses
+                            {calculateDays()} dias
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -664,8 +478,6 @@ const NewOrder = () => {
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Informações Importantes */}
                 <Card className="border-yellow-200 bg-yellow-50">
                   <CardContent className="pt-6">
                     <h3 className="font-semibold mb-2">
@@ -684,7 +496,6 @@ const NewOrder = () => {
                     </ul>
                   </CardContent>
                 </Card>
-
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={handlePrevStep}>
                     Anterior

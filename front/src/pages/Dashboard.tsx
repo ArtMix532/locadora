@@ -310,10 +310,16 @@ const Dashboard = () => {
                       Gerenciar Contratos
                     </Button>
                   </Link>
-                  <Link to="/clientes" className="block">
+                  <Link to="/cadastro-clientes" className="block">
                     <Button variant="outline" className="w-full justify-start">
                       <Users className="mr-2 h-4 w-4" />
                       Cadastro de Clientes
+                    </Button>
+                  </Link>
+                  <Link to="/cadastro-frota" className="block">
+                    <Button variant="outline" className="w-full justify-start">
+                      <Car className="mr-2 h-4 w-4" />
+                      Cadastro de Frota
                     </Button>
                   </Link>
                 </>
@@ -323,12 +329,6 @@ const Dashboard = () => {
                     <Button variant="outline" className="w-full justify-start">
                       <Plus className="mr-2 h-4 w-4" />
                       Fazer Novo Pedido
-                    </Button>
-                  </Link>
-                  <Link to="/frota" className="block">
-                    <Button variant="outline" className="w-full justify-start">
-                      <Car className="mr-2 h-4 w-4" />
-                      Consultar Frota
                     </Button>
                   </Link>
                   <Link to="/meus-pedidos" className="block">

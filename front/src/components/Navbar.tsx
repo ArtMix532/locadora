@@ -31,7 +31,6 @@ const Navbar = ({
       label: "Meus Pedidos",
       active: isActive("/meus-pedidos"),
     },
-    { path: "/frota", label: "Frota", active: isActive("/frota") },
     {
       path: "/novo-pedido",
       label: "Novo Pedido",
