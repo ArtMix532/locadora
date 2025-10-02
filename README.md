@@ -1,6 +1,6 @@
-![GitHub repo size](https://img.shields.io/github/repo-size/SEU-USUARIO-GITHUB/NOME-DO-REPOSITORIO)
-![GitHub language count](https://img.shields.io/github/languages/count/SEU-USUARIO-GITHUB/NOME-DO-REPOSITORIO)
-![GitHub forks](https://img.shields.io/github/forks/SEU-USUARIO-GITHUB/NOME-DO-REPOSITORIO)
+![GitHub repo size](https://img.shields.io/github/repo-size/SrGuzz/locadora)
+![GitHub language count](https://img.shields.io/github/languages/count/SrGuzz/locadora)
+![GitHub forks](https://img.shields.io/github/forks/SrGuzz/locadora)
 
 # 🚗 AutoLux Rental - Sistema de Locadora de Veículos
 
