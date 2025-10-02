@@ -69,7 +69,7 @@ O projeto pode ser acessado online através do seguinte link:
 
 ## 📸 Preview
 
-<img src="URL_DA_SUA_IMAGEM.png" alt="Preview do projeto AutoLux Rental">
+<img src="artefatos/GifProjetoLocadora.gif" alt="Preview do projeto AutoLux Rental">
 
 ## 👥 Desenvolvedor
 
