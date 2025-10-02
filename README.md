@@ -2,7 +2,7 @@
 ![GitHub language count](https://img.shields.io/github/languages/count/SrGuzz/locadora)
 ![GitHub forks](https://img.shields.io/github/forks/SrGuzz/locadora)
 
-# 🚗 AutoLux Rental - Sistema de Locadora de Veículos
+#  AutoLux Rental - Sistema de Locadora de Veículos
 
 Este é um projeto full-stack de um sistema de gerenciamento para uma locadora de veículos, desenvolvido como parte de um estudo aprofundado em tecnologias de front-end e back-end. A plataforma atende a dois tipos de usuários: **Clientes**, que podem solicitar e acompanhar aluguéis, e **Agentes**, que gerenciam as operações.
 
