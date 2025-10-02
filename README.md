@@ -6,6 +6,11 @@
 
 Este é um projeto full-stack de um sistema de gerenciamento para uma locadora de veículos, desenvolvido como parte de um estudo aprofundado em tecnologias de front-end e back-end. A plataforma atende a dois tipos de usuários: **Clientes**, que podem solicitar e acompanhar aluguéis, e **Agentes**, que gerenciam as operações.
 
+## 📸 Preview
+
+<img src="artefatos/GifProjetoLocadora.gif" alt="Preview do projeto AutoLux Rental">
+
+
 ## 🚀 Tecnologias Utilizadas
 
 O projeto foi construído com uma stack moderna, separando as responsabilidades entre o cliente (front-end) e o servidor (back-end).
@@ -67,9 +72,6 @@ O projeto pode ser acessado online através do seguinte link:
 
 [Acessar a Aplicação](https://SEU-LINK-AQUI.com/)
 
-## 📸 Preview
-
-<img src="artefatos/GifProjetoLocadora.gif" alt="Preview do projeto AutoLux Rental">
 
 ## 👥 Desenvolvedor
 
